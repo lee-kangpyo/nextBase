@@ -2,7 +2,7 @@
 
 'use client'; // 클라이언트 컴포넌트로 지정
 
-import { authService } from '@/services/auth';
+import { authService } from '@/services/authService';
 import {
   Box,
   TextField,
@@ -21,6 +21,10 @@ export default function LoginPage() {
       .login(data.get('username') as string, data.get('password') as string)
       .then((res) => {
         console.log(res);
+        // Cookies.set('accessToken', res.accessToken);
+        // Cookies.set('refreshToken', res.refreshToken);
+        // setCookie('accessToken', res.accessToken);
+        // setCookie('refreshToken', res.refreshToken);
       })
       .catch((err) => {
         console.log(err);

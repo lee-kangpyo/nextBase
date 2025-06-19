@@ -10,7 +10,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json', // 기본적으로 JSON 형식으로 통신
   },
-  // withCredentials: true, // 세션/쿠키 기반 인증 시 필요 (CORS 설정과 함께)
+  withCredentials: true, // 세션/쿠키 기반 인증 시 필요 (CORS 설정과 함께)
 });
 
 // 요청 인터셉터 - 모든 요청이 백엔드로 보내지기 전에 실행.
