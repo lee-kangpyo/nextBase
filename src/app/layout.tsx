@@ -8,7 +8,10 @@ import { ThemeProvider } from '@mui/material/styles';
 import theme from '@/theme';
 
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import QueryProvider from '@/components/QueryProvider';
+import QueryProvider from '@/components/providers/QueryProvider';
+import SessionProvider from '@/components/providers/SessionProvider';
+import { DialogProvider } from '@/components/providers/DialogProvider';
+import { ToastContainer } from 'react-toastify';
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
   subsets: ['latin'],
@@ -41,14 +44,29 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AppRouterCacheProvider options={{ key: 'css', enableCssLayer: true }}>
-          <ThemeProvider theme={theme}>
-            <QueryProvider>
-              {children}
-              <ReactQueryDevtools initialIsOpen={false} />
-            </QueryProvider>
-          </ThemeProvider>
-        </AppRouterCacheProvider>
+        <SessionProvider>
+          <AppRouterCacheProvider
+            options={{ key: 'css', enableCssLayer: true }}
+          >
+            <ThemeProvider theme={theme}>
+              <QueryProvider>
+                <DialogProvider>{children}</DialogProvider>
+                <ReactQueryDevtools initialIsOpen={false} />
+              </QueryProvider>
+            </ThemeProvider>
+          </AppRouterCacheProvider>
+        </SessionProvider>
+        <ToastContainer
+          position="bottom-left" // 토스트 알림이 나타날 화면 위치 (예: 'bottom-left', 'top-right')
+          autoClose={5000} // 알림이 자동으로 닫히는 시간 (밀리초), false면 수동 닫힘
+          closeOnClick // 알림 클릭 시 닫히도록 할지 여부
+          pauseOnHover // 마우스 오버 시 자동 닫힘 타이머 일시 중지 여부
+          theme="light" // 알림의 시각적 테마 ('light', 'dark', 'colored')
+          hideProgressBar={false} // 진행 바 표시 여부
+          newestOnTop={false} // 새로운 알림이 기존 알림 위에 쌓일지 아래에 쌓일지 (false: 아래에 쌓임)
+          pauseOnFocusLoss // 브라우저 탭 포커스를 잃었을 때 타이머 일시 중지 여부
+          draggable // 알림을 드래그하여 닫을 수 있는지 여부
+        />
       </body>
     </html>
   );
