@@ -12,19 +12,28 @@ import {
   Link,
 } from '@mui/material';
 import NextLink from 'next/link'; // Next.js의 Link 컴포넌트를 MUI Link와 함께 사용
-
+import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 export default function LoginPage() {
+  const router = useRouter();
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
+    const username = data.get('username') as string;
+    const password = data.get('password') as string;
     authService
-      .login(data.get('username') as string, data.get('password') as string)
-      .then((res) => {
+      .login(username, password)
+      .then(async (res) => {
         console.log(res);
-        // Cookies.set('accessToken', res.accessToken);
-        // Cookies.set('refreshToken', res.refreshToken);
-        // setCookie('accessToken', res.accessToken);
-        // setCookie('refreshToken', res.refreshToken);
+        await signIn('credentials', {
+          redirect: false,
+          username,
+          password,
+          accessToken: res.accessToken,
+          refreshToken: res.refreshToken,
+        });
+
+        router.push('/main');
       })
       .catch((err) => {
         console.log(err);

@@ -26,6 +26,10 @@ const eslintConfig = [
     rules: {
       // prettier/prettier 규칙을 'error'로 설정하여 포맷팅 위반 시 ESLint 오류로 전달.
       'prettier/prettier': 'error',
+      // any 허용
+      '@typescript-eslint/no-explicit-any': 'off',
+      // never read 허용
+      //'@typescript-eslint/no-unused-vars': 'off',
     },
   },
   // prettierConfig 가장 마지막 위치 ESLint 규칙을 비활성화하여 Prettier와 충돌방지.
