@@ -29,7 +29,7 @@ const eslintConfig = [
       // any 허용
       '@typescript-eslint/no-explicit-any': 'off',
       // never read 허용
-      //'@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
   // prettierConfig 가장 마지막 위치 ESLint 규칙을 비활성화하여 Prettier와 충돌방지.

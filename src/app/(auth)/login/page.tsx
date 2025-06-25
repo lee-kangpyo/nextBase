@@ -2,7 +2,6 @@
 
 'use client'; // 클라이언트 컴포넌트로 지정
 
-import { authService } from '@/services/authService';
 import {
   Box,
   TextField,
@@ -12,32 +11,65 @@ import {
   Link,
 } from '@mui/material';
 import NextLink from 'next/link'; // Next.js의 Link 컴포넌트를 MUI Link와 함께 사용
-import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { login } from '@/actions/auth';
+import { useState } from 'react';
+import { useDialog } from '@/components/providers/DialogProvider';
+import { signIn } from 'next-auth/react';
+
 export default function LoginPage() {
   const router = useRouter();
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const username = data.get('username') as string;
-    const password = data.get('password') as string;
-    authService
-      .login(username, password)
-      .then(async (res) => {
-        console.log(res);
-        await signIn('credentials', {
-          redirect: false,
-          username,
-          password,
-          accessToken: res.accessToken,
-          refreshToken: res.refreshToken,
-        });
+  const { showAlert } = useDialog();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-        router.push('/main');
-      })
-      .catch((err) => {
-        console.log(err);
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    const formData = new FormData(event.currentTarget);
+    const username = formData.get('username') as string;
+    const password = formData.get('password') as string;
+
+    try {
+      const result = await login(formData); // Server Action 호출
+      await signIn('credentials', {
+        redirect: false,
+        username,
+        password,
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
       });
+      router.push('/main');
+    } catch (err: any) {
+      await showAlert(
+        '알림',
+        err.message || '로그인에 실패했습니다. 잠시후 다시 시도해주세요.',
+        {
+          useSweetAlert: true,
+        },
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
+    // event.preventDefault();
+    // const data = new FormData(event.currentTarget);
+    // const username = data.get('username') as string;
+    // const password = data.get('password') as string;
+    // authService
+    //   .login(username, password)
+    //   .then(async (res) => {
+    //     console.log(res);
+    //     await signIn('credentials', {
+    //       redirect: false,
+    //       username,
+    //       password,
+    //       accessToken: res.accessToken,
+    //       refreshToken: res.refreshToken,
+    //     });
+    //     router.push('/main');
+    //   })
+    //   .catch((err) => {
+    //     console.log(err);
+    //   });
   };
 
   return (
@@ -89,8 +121,9 @@ export default function LoginPage() {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
+            disabled={isSubmitting}
           >
-            로그인
+            {isSubmitting ? '로그인 중...' : '로그인'}
           </Button>
           <Box
             sx={{

@@ -14,7 +14,7 @@ export const authOptions: NextAuthOptions = {
         user: { label: 'User', type: 'text' },
       },
       async authorize(credentials: Record<string, string> | undefined) {
-        console.log('credentials');
+        console.log('[authorize] 인증 시도');
         if (!credentials?.accessToken || !credentials?.refreshToken)
           return null;
 
@@ -30,7 +30,7 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }: { token: JWT; user?: AuthUser }) {
-      console.log('jwt');
+      console.log('[jwt] 토큰 생성');
       if (user) {
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      console.log('session');
+      console.log('[session] 세션 생성');
       session.user = {
         email: token.email as string,
       };
