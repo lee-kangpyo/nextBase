@@ -1,8 +1,9 @@
 'use client';
 import { Button } from '@mui/material';
-import { useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import { useDialog } from '@/components/providers/DialogProvider';
 import { toast } from 'react-toastify';
+import { logout } from '@/actions/auth';
 export default function MainPage() {
   const { showAlert, showConfirm } = useDialog();
   const session = useSession();
@@ -33,6 +34,14 @@ export default function MainPage() {
       <Button onClick={() => toast.warning('경고')}>Warning</Button>
       <Button onClick={() => toast.info('정보')}>Info</Button>
       <Button onClick={() => toast.dark('어두운 테마')}>Dark</Button>
+      <Button
+        onClick={async () => {
+          await logout(); // 백엔드 세션/토큰 무효화
+          signOut({ callbackUrl: '/login' });
+        }}
+      >
+        로그아웃
+      </Button>
     </div>
   );
 }

@@ -1,4 +1,7 @@
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { AuthSession } from '@/types/auth';
 import axios from 'axios';
+import { getServerSession } from 'next-auth';
 
 // 환경 변수 사용: 백엔드 API의 기본 URL을 설정합니다.
 // .env.local 파일에 NEXT_PUBLIC_API_URL=http://localhost:8080/api 와 같이 추가하세요.
@@ -15,12 +18,11 @@ const apiClient = axios.create({
 
 // 요청 인터셉터 - 모든 요청이 백엔드로 보내지기 전에 실행.
 apiClient.interceptors.request.use(
-  (config) => {
-    // 로컬 스토리지에서 인증 토큰을 가져와 Authorization 헤더에 추가
-    // const token = localStorage.getItem('authToken');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+  async (config) => {
+    const session = (await getServerSession(authOptions)) as AuthSession | null;
+    if (session && session.accessToken) {
+      config.headers.Authorization = `Bearer ${session.accessToken}`;
+    }
     return config;
   },
   (error) => {
@@ -34,11 +36,8 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    // 예시: 401 Unauthorized (인증 실패) 에러 발생 시 로그인 페이지로 리다이렉트
-    // if (error.response && error.response.status === 401) {
-    //   console.error('Authentication failed! Redirecting to login.');
-    //   // window.location.href = '/login'; // 또는 Next.js useRouter 사용
-    // }
+    // 여기에 401 Unauthorized 에러 처리 로직 (토큰 갱신 및 재시도, 또는 로그아웃)
+    // if (error.response?.status === 401 && !originalRequest._retry) { ... }
     return Promise.reject(error);
   },
 );

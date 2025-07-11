@@ -1,8 +1,17 @@
 'use server';
 import apiClient from '@/utils/apiClient';
-
+import { getToken } from 'next-auth/jwt';
+import { signOut } from 'next-auth/react';
+import { redirect } from 'next/navigation';
 const API_URL = '/auth';
 
+/**
+ * 사용자 로그인을 처리하는 Server Action
+ * - 스프링 백엔드에 로그인 요청을 보내 토큰 발급
+ * - 이후 client에서 NextAuth.js 세션 생성
+ * @param formData 로그인 폼 데이터
+ * @returns 로그인 응답 데이터
+ */
 export async function login(formData: FormData) {
   const username = formData.get('username') as string;
   const password = formData.get('password') as string;
@@ -26,4 +35,46 @@ export async function login(formData: FormData) {
     console.error('[Server Action] 로그인 처리 중 오류:', errorMessage);
     throw new Error(errorMessage);
   }
+}
+
+/**
+ * 사용자 로그아웃을 처리하는 Server Action
+ * - 스프링 백엔드에 로그아웃 요청을 보내 토큰 무효화
+ * - NextAuth.js 세션 제거
+ * @param callbackUrl 로그아웃 후 리다이렉트할 URL (선택 사항) default: /login
+ */
+export async function logout(callbackUrl?: string) {
+  const redirectTo = callbackUrl || '/login';
+  try {
+    console.log('[Server Action] 로그아웃 시작');
+    try {
+      // ✅ 스프링 백엔드 로그아웃 요청
+      await apiClient.post('/auth/logout');
+      console.log(
+        '[Server Action] 스프링 백엔드 로그아웃 요청 성공 (AccessToken 사용)',
+      );
+    } catch (backendError) {
+      // 백엔드 로그아웃 실패는 치명적이지 않을 수 있으므로 경고만 로깅
+      // (예: 이미 세션이 만료되어 AccessToken이 유효하지 않은 경우)
+      console.warn(
+        '[Server Action] 백엔드 로그아웃 실패 또는 AccessToken 유효하지 않음:',
+        (backendError as any).response?.data || (backendError as any).message,
+      );
+    }
+
+    // // ✅ **NextAuth.js 세션 제거**
+    // //    NextAuth.js가 관리하는 JWT 세션 쿠키를 삭제하여 프론트엔드 로그인 상태를 해제
+    // //    `redirect: false`로 설정하여 NextAuth.js의 자동 리다이렉트 막기.
+    // await signOut({ redirect: false, callbackUrl: redirectTo });
+    // console.log('[Server Action] NextAuth.js 세션 제거 완료');
+
+    // // ✅ 로그아웃 후 지정된 URL로 리다이렉트
+    // console.log(`[Server Action] 로그아웃 완료, ${redirectTo}로 리다이렉트`);
+  } catch (error) {
+    console.error('[Server Action] 로그아웃 중 예외 발생:', error);
+    // throw error; // 로그아웃 실패를 던지는 방법도 있다.
+  }
+  // } finally {
+  //   redirect(redirectTo);
+  // }
 }
