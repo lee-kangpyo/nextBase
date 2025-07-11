@@ -16,6 +16,15 @@ const apiClient = axios.create({
   withCredentials: true, // 세션/쿠키 기반 인증 시 필요 (CORS 설정과 함께)
 });
 
+// 액세스 토큰 없이 호출
+export const apiClientWithoutToken = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+});
+
 // 요청 인터셉터 - 모든 요청이 백엔드로 보내지기 전에 실행.
 apiClient.interceptors.request.use(
   async (config) => {
@@ -26,6 +35,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
+    console.log('apiClient 인터셉터 request error', error);
     return Promise.reject(error);
   },
 );
@@ -36,8 +46,7 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    // 여기에 401 Unauthorized 에러 처리 로직 (토큰 갱신 및 재시도, 또는 로그아웃)
-    // if (error.response?.status === 401 && !originalRequest._retry) { ... }
+    console.log('apiClient 인터셉터 response error', error);
     return Promise.reject(error);
   },
 );

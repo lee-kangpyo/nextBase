@@ -3,7 +3,9 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { JWT } from 'next-auth/jwt';
 import { Session } from 'next-auth';
 import { AuthSession, AuthUser } from '@/types/auth';
-
+import { jwtDecode } from 'jwt-decode';
+import { MyJwtPayload } from '@/types/jwt';
+import { getTest, login, reissueToken } from '@/actions/auth';
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -14,17 +16,26 @@ export const authOptions: NextAuthOptions = {
         user: { label: 'User', type: 'text' },
       },
       async authorize(credentials: Record<string, string> | undefined) {
-        console.log('[authorize] 인증 시도');
-        if (!credentials?.accessToken || !credentials?.refreshToken)
-          return null;
+        if (!credentials) return null;
+        // credentials에서 username, password 추출
+        const formData = new FormData();
+        formData.append('username', credentials.username);
+        formData.append('password', credentials.password);
 
-        const user = {
-          accessToken: credentials.accessToken,
-          refreshToken: credentials.refreshToken,
-          ...JSON.parse(credentials.user || '{}'),
+        // Server Action의 login 함수 호출
+        const data = await login(formData);
+        if (!data) return null;
+
+        const payload = jwtDecode<MyJwtPayload>(data.accessToken);
+
+        return {
+          id: data.userName,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+          userName: data.userName,
+          roles: payload.roles,
+          // ...필요한 정보 추가
         };
-
-        return user;
       },
     }),
   ],
@@ -34,21 +45,35 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
-        token.email = user.email;
+        token.userName = user.userName;
+        token.roles = user.roles;
+      } else {
+        // 이후 요청(세션 갱신 등)
+        // accessToken 만료 체크 및 refresh 로직 추가 가능
+        const now = Math.floor(Date.now() / 1000);
+        const payload = jwtDecode(token.accessToken as string);
+        if (payload.exp && payload.exp < now) {
+          try {
+            const refreshed = await reissueToken(token.refreshToken as string);
+            token.accessToken = refreshed.accessToken;
+            token.refreshToken = refreshed.refreshToken;
+          } catch (e) {
+            // refreshToken 만료/유효하지 않음 → 세션 무효화
+            // 필요시 로그 등 추가
+            throw e; // NextAuth가 세션을 무효화함
+          }
+        }
       }
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
       console.log('[session] 세션 생성');
       session.user = {
-        email: token.email as string,
+        userName: token.userName as string,
+        roles: token.roles as string[],
       };
-      (session as AuthSession).accessToken = token.accessToken as
-        | string
-        | undefined;
-      (session as AuthSession).refreshToken = token.refreshToken as
-        | string
-        | undefined;
+      session.accessToken = token.accessToken as string;
+      session.refreshToken = token.refreshToken as string;
       return session;
     },
   },

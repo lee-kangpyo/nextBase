@@ -1,5 +1,5 @@
 'use server';
-import apiClient from '@/utils/apiClient';
+import apiClient, { apiClientWithoutToken } from '@/utils/apiClient';
 import { getToken } from 'next-auth/jwt';
 import { signOut } from 'next-auth/react';
 import { redirect } from 'next/navigation';
@@ -49,7 +49,7 @@ export async function logout(callbackUrl?: string) {
     console.log('[Server Action] 로그아웃 시작');
     try {
       // ✅ 스프링 백엔드 로그아웃 요청
-      await apiClient.post('/auth/logout');
+      await apiClient.post(`${API_URL}/logout`);
       console.log(
         '[Server Action] 스프링 백엔드 로그아웃 요청 성공 (AccessToken 사용)',
       );
@@ -77,4 +77,25 @@ export async function logout(callbackUrl?: string) {
   // } finally {
   //   redirect(redirectTo);
   // }
+}
+
+// 토큰 재발급
+export async function reissueToken(refreshToken: string) {
+  //여기에 헤더 추가
+  const res = await apiClientWithoutToken.post(
+    `${API_URL}/token/reissue`,
+    {},
+    {
+      headers: {
+        'X-Refresh-Token': refreshToken,
+        'Content-Type': 'application/json',
+      },
+    },
+  );
+  return res.data;
+}
+
+export async function getTest() {
+  const res = await apiClient.get(`${API_URL}/helloWord/test`);
+  return res.data;
 }

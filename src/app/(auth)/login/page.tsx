@@ -30,13 +30,10 @@ export default function LoginPage() {
     const password = formData.get('password') as string;
 
     try {
-      const result = await login(formData); // Server Action 호출
       await signIn('credentials', {
         redirect: false,
         username,
         password,
-        accessToken: result.accessToken,
-        refreshToken: result.refreshToken,
       });
       router.push('/main');
     } catch (err: any) {
