@@ -1,7 +1,7 @@
 // src/middlewares/global.middleware.ts
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
+import { logger } from '@/utils/logger';
 export async function handleGlobalLogic(
   req: NextRequest,
 ): Promise<NextResponse | undefined> {
@@ -14,6 +14,6 @@ export async function handleGlobalLogic(
   //   return NextResponse.redirect(new URL('/maintenance', req.url));
   // }
 
-  console.log('[GlobalMiddleware] 완료.');
+  logger.info('[GlobalMiddleware] 완료.');
   return undefined;
 }

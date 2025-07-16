@@ -27,7 +27,14 @@ const authMiddleware = withAuth(
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        const publicPaths = ['/login', '/register', '/api/auth'];
+        const publicPaths = [
+          '/login',
+          '/register',
+          '/forgot-password',
+          '/reset-password',
+          '/register',
+          '/api/auth',
+        ];
         const isPublicPath = publicPaths.some((path) =>
           req.nextUrl.pathname.startsWith(path),
         );

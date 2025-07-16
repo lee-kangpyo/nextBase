@@ -35,7 +35,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.log('apiClient 인터셉터 request error', error);
+    console.error('apiClient 인터셉터 request error', error);
     return Promise.reject(error);
   },
 );
@@ -46,7 +46,7 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.log('apiClient 인터셉터 response error', error);
+    console.error('apiClient 인터셉터 response error', error);
     return Promise.reject(error);
   },
 );

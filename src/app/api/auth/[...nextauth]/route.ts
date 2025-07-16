@@ -6,6 +6,7 @@ import { AuthSession, AuthUser } from '@/types/auth';
 import { jwtDecode } from 'jwt-decode';
 import { MyJwtPayload } from '@/types/jwt';
 import { getTest, login, reissueToken } from '@/actions/auth';
+import { logger } from '@/utils/logger';
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -23,25 +24,29 @@ export const authOptions: NextAuthOptions = {
         formData.append('password', credentials.password);
 
         // Server Action의 login 함수 호출
-        const data = await login(formData);
-        if (!data) return null;
+        try {
+          const data = await login(formData);
+          if (!data) return null;
 
-        const payload = jwtDecode<MyJwtPayload>(data.accessToken);
+          const payload = jwtDecode<MyJwtPayload>(data.accessToken);
 
-        return {
-          id: data.userName,
-          accessToken: data.accessToken,
-          refreshToken: data.refreshToken,
-          userName: data.userName,
-          roles: payload.roles,
-          // ...필요한 정보 추가
-        };
+          return {
+            id: data.userName,
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            userName: data.userName,
+            roles: payload.roles,
+            // ...필요한 정보 추가
+          };
+        } catch (e) {
+          throw e;
+        }
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }: { token: JWT; user?: AuthUser }) {
-      console.log('[jwt] 토큰 생성');
+      // logger.info('jwt callback 호출');
       if (user) {
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
@@ -67,7 +72,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      console.log('[session] 세션 생성');
+      // logger.info('session callback 호출');
       session.user = {
         userName: token.userName as string,
         roles: token.roles as string[],

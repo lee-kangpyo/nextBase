@@ -30,11 +30,12 @@ export default function LoginPage() {
     const password = formData.get('password') as string;
 
     try {
-      await signIn('credentials', {
+      const res = await signIn('credentials', {
         redirect: false,
         username,
         password,
       });
+      if (!res?.ok) throw new Error();
       router.push('/main');
     } catch (err: any) {
       await showAlert(
@@ -131,7 +132,7 @@ export default function LoginPage() {
             }}
           >
             {/* 수정된 부분: MUI Link의 component 속성으로 NextLink 사용 */}
-            <Link component={NextLink} href="/reset-password" variant="body2">
+            <Link component={NextLink} href="/forgot-password" variant="body2">
               비밀번호를 잊으셨나요?
             </Link>
             <Link component={NextLink} href="/register" variant="body2">
