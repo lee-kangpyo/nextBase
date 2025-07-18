@@ -25,16 +25,21 @@ export const authOptions: NextAuthOptions = {
 
         // Server Action의 login 함수 호출
         try {
-          const data = await login(formData);
-          if (!data) return null;
+          const res = await login(formData);
+          if (!res) return null;
 
-          const payload = jwtDecode<MyJwtPayload>(data.accessToken);
+          if (!res.success) {
+            // Server Action에서 실패한 경우 에러 메시지를 throw
+            throw new Error(res.message || '로그인에 실패했습니다.');
+          }
+
+          const payload = jwtDecode<MyJwtPayload>(res.data.accessToken);
 
           return {
-            id: data.userName,
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
-            userName: data.userName,
+            id: res.data.userName,
+            accessToken: res.data.accessToken,
+            refreshToken: res.data.refreshToken,
+            userName: res.data.userName,
             roles: payload.roles,
             // ...필요한 정보 추가
           };

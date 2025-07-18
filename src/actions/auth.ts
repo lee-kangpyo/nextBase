@@ -1,6 +1,9 @@
 'use server';
-import { CustomError } from '@/components/CustomError';
-import apiClient, { apiClientWithoutToken } from '@/utils/apiClient';
+import { RegisterFormData } from '@/types/auth';
+import {
+  apiClientWithoutToken,
+  apiClientServer,
+} from '@/utils/apiClientServer';
 import { logger } from '@/utils/logger';
 import axios from 'axios';
 const API_URL = '/auth';
@@ -17,23 +20,94 @@ export async function login(formData: FormData) {
   const password = formData.get('password') as string;
 
   if (!username || !password) {
-    throw new Error('사용자 이름과 비밀번호를 입력해주세요.');
+    return {
+      success: false,
+      message: '사용자 이름과 비밀번호를 입력해주세요.',
+    };
   }
   logger.info(`[Server Action] 로그인 요청 시작: ${username}`);
 
   try {
     logger.info(`[Server Action] 스프링 백엔드에 로그인 요청: ${username}`);
-    const res = await apiClient.post(`${API_URL}/login`, {
+    const res = await apiClientServer.post(`${API_URL}/login`, {
       userName: username,
       password: password,
     });
     logger.info('[Server Action] 로그인 성공!');
-    return res.data;
+    return {
+      success: true,
+      data: res.data,
+    };
   } catch (error: any) {
     const message = error.response?.data || error.message;
     const errorMessage = message || '로그인 중 알 수 없는 오류 발생';
     logger.error('[Server Action] 로그인 처리 중 오류:', errorMessage);
-    throw new Error(errorMessage);
+    return {
+      success: false,
+      message: errorMessage,
+    };
+  }
+}
+
+/**
+ * 사용자 회원가입을 처리하는 Server Action
+ * - 스프링 백엔드에 회원가입 요청을 보내 사용자 등록
+ * - 기존 login 함수와 동일한 패턴 사용
+ * @param formData 회원가입 폼 데이터
+ * @returns 회원가입 응답 데이터
+ */
+export async function registUser(formData: RegisterFormData) {
+  const userName = formData.userName;
+  const email = formData.email;
+  const password = formData.password;
+
+  // 필수 필드 검증
+  if (!userName || !email || !password) {
+    return {
+      success: false,
+      message: '사용자명, 이메일, 비밀번호를 모두 입력해주세요.',
+    };
+  }
+
+  // 이메일 형식 검증
+  const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+  if (!emailRegex.test(email)) {
+    return {
+      success: false,
+      message: '올바른 이메일 형식을 입력해주세요.',
+    };
+  }
+
+  // 비밀번호 길이 검증
+  if (password.length < 8) {
+    return {
+      success: false,
+      message: '비밀번호는 8자 이상이어야 합니다.',
+    };
+  }
+
+  logger.info(`[Server Action] 회원가입 요청 시작: ${userName} (${email})`);
+
+  try {
+    logger.info(`[Server Action] 스프링 백엔드에 회원가입 요청: ${userName}`);
+    const res = await apiClientWithoutToken.post(`${API_URL}/register`, {
+      userName,
+      email,
+      password,
+    });
+    logger.info('[Server Action] 회원가입 성공!');
+    return {
+      success: true,
+      data: res.data,
+    };
+  } catch (error: any) {
+    const message = error.response?.data || error.message;
+    const errorMessage = message || '회원가입 중 알 수 없는 오류 발생';
+    logger.error('[Server Action] 회원가입 처리 중 오류:', errorMessage);
+    return {
+      success: false,
+      message: errorMessage,
+    };
   }
 }
 
@@ -49,7 +123,7 @@ export async function logout(callbackUrl?: string) {
     logger.info('[Server Action] 로그아웃 시작');
     try {
       // ✅ 스프링 백엔드 로그아웃 요청
-      await apiClient.post(`${API_URL}/logout`);
+      await apiClientServer.post(`${API_URL}/logout`);
       logger.info(
         '[Server Action] 스프링 백엔드 로그아웃 요청 성공 (AccessToken 사용)',
       );
@@ -84,16 +158,19 @@ export async function reissueToken(refreshToken: string) {
 }
 
 export async function getTest() {
-  const res = await apiClient.get(`${API_URL}/helloWord/test`);
+  const res = await apiClientServer.get(`${API_URL}/helloWord/test`);
   return res.data;
 }
 
 // 비밀번호 재설정
 export async function resetPassword(userId: string) {
   try {
-    const res = await apiClient.post(`${API_URL}/password/reset/request`, {
-      userId,
-    });
+    const res = await apiClientServer.post(
+      `${API_URL}/password/reset/request`,
+      {
+        userId,
+      },
+    );
     // 성공 시
     return {
       ok: true,

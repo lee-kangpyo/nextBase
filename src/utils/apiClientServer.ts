@@ -8,7 +8,8 @@ import { getServerSession } from 'next-auth';
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
 
-const apiClient = axios.create({
+// server 용 apiClient
+export const apiClientServer = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json', // 기본적으로 JSON 형식으로 통신
@@ -16,7 +17,7 @@ const apiClient = axios.create({
   withCredentials: true, // 세션/쿠키 기반 인증 시 필요 (CORS 설정과 함께)
 });
 
-// 액세스 토큰 없이 호출
+// 액세스 토큰 없이 호출 client/server 사용가능
 export const apiClientWithoutToken = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -26,7 +27,7 @@ export const apiClientWithoutToken = axios.create({
 });
 
 // 요청 인터셉터 - 모든 요청이 백엔드로 보내지기 전에 실행.
-apiClient.interceptors.request.use(
+apiClientServer.interceptors.request.use(
   async (config) => {
     const session = (await getServerSession(authOptions)) as AuthSession | null;
     if (session && session.accessToken) {
@@ -41,7 +42,7 @@ apiClient.interceptors.request.use(
 );
 
 // 응답 인터셉터 - 백엔드로부터 응답을 받은 후에 실행.
-apiClient.interceptors.response.use(
+apiClientServer.interceptors.response.use(
   (response) => {
     return response;
   },
@@ -50,5 +51,3 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   },
 );
-
-export default apiClient;

@@ -35,12 +35,22 @@ export default function LoginPage() {
         username,
         password,
       });
-      if (!res?.ok) throw new Error();
+      if (!res?.ok) {
+        await showAlert(
+          '알림',
+          res?.error || '로그인에 실패했습니다. 잠시후 다시 시도해주세요.',
+          {
+            useSweetAlert: true,
+          },
+        );
+        return;
+      }
       router.push('/main');
     } catch (err: any) {
       await showAlert(
         '알림',
-        err.message || '로그인에 실패했습니다. 잠시후 다시 시도해주세요.',
+        err?.message ||
+          '로그인 중 오류가 발생했습니다. 잠시후 다시 시도해주세요.',
         {
           useSweetAlert: true,
         },
@@ -48,26 +58,6 @@ export default function LoginPage() {
     } finally {
       setIsSubmitting(false);
     }
-    // event.preventDefault();
-    // const data = new FormData(event.currentTarget);
-    // const username = data.get('username') as string;
-    // const password = data.get('password') as string;
-    // authService
-    //   .login(username, password)
-    //   .then(async (res) => {
-    //     console.log(res);
-    //     await signIn('credentials', {
-    //       redirect: false,
-    //       username,
-    //       password,
-    //       accessToken: res.accessToken,
-    //       refreshToken: res.refreshToken,
-    //     });
-    //     router.push('/main');
-    //   })
-    //   .catch((err) => {
-    //     console.log(err);
-    //   });
   };
 
   return (
