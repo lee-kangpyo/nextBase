@@ -1,4 +1,5 @@
 // src/components/layout/Header.tsx
+'use client';
 import React from 'react';
 import {
   AppBar,
@@ -9,13 +10,18 @@ import {
   Stack,
   Chip,
 } from '@mui/material';
-import { useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
+import { logout } from '@/actions/auth';
 
-export default function Header({ onLogout }: { onLogout?: () => void }) {
+export default function Header() {
   const { data: session } = useSession();
-  debugger;
   const userName = session?.user?.userName;
   const roles = session?.user?.roles || [];
+
+  const logoutHandler = async () => {
+    await logout();
+    signOut({ callbackUrl: '/login' });
+  };
 
   return (
     <AppBar position="static" color="primary" elevation={2}>
@@ -34,11 +40,9 @@ export default function Header({ onLogout }: { onLogout?: () => void }) {
               <Chip label="권한 없음" color="default" size="small" />
             )}
           </Stack>
-          {onLogout && (
-            <Button color="inherit" onClick={onLogout}>
-              로그아웃
-            </Button>
-          )}
+          <Button color="inherit" onClick={logoutHandler}>
+            로그아웃
+          </Button>
         </Box>
       </Toolbar>
     </AppBar>

@@ -41,7 +41,6 @@ export const authOptions: NextAuthOptions = {
             refreshToken: res.data.refreshToken,
             userName: res.data.userName,
             roles: payload.roles,
-            // ...필요한 정보 추가
           };
         } catch (e) {
           throw e;
@@ -51,39 +50,34 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }: { token: JWT; user?: AuthUser }) {
-      // logger.info('jwt callback 호출');
+      logger.info('jwt callback 호출');
       if (user) {
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
         token.userName = user.userName;
         token.roles = user.roles;
-      } else {
-        // 이후 요청(세션 갱신 등)
-        // accessToken 만료 체크 및 refresh 로직 추가 가능
-        const now = Math.floor(Date.now() / 1000);
-        const payload = jwtDecode(token.accessToken as string);
-        if (payload.exp && payload.exp < now) {
-          try {
-            const refreshed = await reissueToken(token.refreshToken as string);
-            token.accessToken = refreshed.accessToken;
-            token.refreshToken = refreshed.refreshToken;
-          } catch (e) {
-            // refreshToken 만료/유효하지 않음 → 세션 무효화
-            // 필요시 로그 등 추가
-            throw e; // NextAuth가 세션을 무효화함
-          }
-        }
       }
-      return token;
+
+      // accessToken 만료 체크
+      const now = Math.floor(Date.now() / 1000);
+      const payload = jwtDecode(token.accessToken as string);
+      logger.info(
+        `[JWT Callback] 토큰 만료 체크 - 현재: ${now}, 만료: ${payload.exp}`,
+      );
+      if (payload.exp && payload.exp > now) {
+        return token;
+      }
+
+      return refreshAccessToken(token);
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      // logger.info('session callback 호출');
+      logger.info('session callback 호출');
       session.user = {
         userName: token.userName as string,
         roles: token.roles as string[],
       };
       session.accessToken = token.accessToken as string;
-      session.refreshToken = token.refreshToken as string;
+      // refreshToken은 쿠키로만 관리하므로 세션에서 제거
       return session;
     },
   },
@@ -93,6 +87,22 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
+const refreshAccessToken = async (jwt: JWT) => {
+  if (!jwt.refreshToken) {
+    logger.error('[JWT Callback] refresh token이 없습니다.');
+    throw new Error('No refresh token');
+  }
+  try {
+    const refreshed = await reissueToken(jwt.refreshToken as string);
+    jwt.accessToken = refreshed.accessToken;
+    jwt.refreshToken = refreshed.refreshToken;
+    logger.info('[JWT Callback] 토큰 재발급 성공');
+    return jwt;
+  } catch (e) {
+    logger.error('[JWT Callback] 토큰 재발급 실패:', e);
+    throw e;
+  }
+};
 const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };

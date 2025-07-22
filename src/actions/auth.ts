@@ -1,11 +1,12 @@
 'use server';
-import { RegisterFormData } from '@/types/auth';
+import { RegisterFormData } from '@/types/register';
 import {
   apiClientWithoutToken,
   apiClientServer,
 } from '@/utils/apiClientServer';
 import { logger } from '@/utils/logger';
 import axios from 'axios';
+import { cookies } from 'next/headers';
 const API_URL = '/auth';
 
 /**
@@ -33,10 +34,30 @@ export async function login(formData: FormData) {
       userName: username,
       password: password,
     });
+
+    // 1. Set-Cookie 헤더에서 refresh token 추출
+    const setCookieHeader = res.headers['set-cookie'];
+    let refreshToken: string | undefined = undefined;
+
+    if (setCookieHeader) {
+      // 여러 쿠키가 있을 수 있으니, X-Refresh-Token만 추출
+      const match = setCookieHeader.find((cookie: string) =>
+        cookie.startsWith('X-Refresh-Token='),
+      );
+      if (match) {
+        refreshToken = match
+          .split(';')[0] // 'X-Refresh-Token=...'
+          .split('=')[1]; // 실제 토큰 값
+      }
+    }
+
     logger.info('[Server Action] 로그인 성공!');
     return {
       success: true,
-      data: res.data,
+      data: {
+        ...res.data,
+        refreshToken,
+      },
     };
   } catch (error: any) {
     const message = error.response?.data || error.message;
@@ -143,18 +164,33 @@ export async function logout(callbackUrl?: string) {
 
 // 토큰 재발급
 export async function reissueToken(refreshToken: string) {
-  //여기에 헤더 추가
-  const res = await apiClientWithoutToken.post(
-    `${API_URL}/token/reissue`,
-    {},
-    {
-      headers: {
-        'X-Refresh-Token': refreshToken,
-        'Content-Type': 'application/json',
+  logger.info('[Server Action] 토큰 재발급 시작');
+  try {
+    const res = await apiClientWithoutToken.post(
+      `${API_URL}/token/reissue`,
+      {},
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Cookie: `X-Refresh-Token=${refreshToken}`,
+        },
       },
-    },
-  );
-  return res.data;
+    );
+    logger.info('[Server Action] 토큰 재발급 성공');
+    return {
+      ...res.data,
+      refreshToken: res.headers['set-cookie']
+        ?.find((cookie: string) => cookie.startsWith('X-Refresh-Token='))
+        ?.split(';')[0]
+        .split('=')[1],
+    };
+  } catch (error: any) {
+    logger.error(
+      '[Server Action] 토큰 재발급 실패:',
+      error.response?.data || error.message,
+    );
+    throw error;
+  }
 }
 
 export async function getTest() {

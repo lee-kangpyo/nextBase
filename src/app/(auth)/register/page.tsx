@@ -16,7 +16,7 @@ import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useDialog } from '@/components/providers/DialogProvider';
 import { registUser } from '@/actions/auth';
-import { RegisterFormData } from '@/types/auth';
+import { RegisterFormData } from '@/types/register';
 import * as Yup from 'yup';
 
 // 회원가입 유효성 검증 스키마

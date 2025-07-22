@@ -10,6 +10,6 @@ declare module 'next-auth' {
       userName?: string;
     };
     accessToken?: string;
-    refreshToken?: string;
+    // refreshToken은 쿠키로만 관리하므로 제거
   }
 }
