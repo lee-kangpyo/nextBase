@@ -26,6 +26,15 @@ export const apiClientWithoutToken = axios.create({
   withCredentials: true,
 });
 
+// useApi 사용시 사용
+export const useApiClient = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true,
+});
+
 // 요청 인터셉터 - 모든 요청이 백엔드로 보내지기 전에 실행.
 apiClientServer.interceptors.request.use(
   async (config) => {
