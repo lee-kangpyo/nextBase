@@ -7,6 +7,7 @@ import {
 import { logger } from '@/utils/logger';
 import axios from 'axios';
 import { cookies } from 'next/headers';
+import { handleRefreshTokenFromResponse } from '@/utils/cookie';
 const API_URL = '/auth';
 
 /**
@@ -35,21 +36,8 @@ export async function login(formData: FormData) {
       password: password,
     });
 
-    // 1. Set-Cookie 헤더에서 refresh token 추출
-    const setCookieHeader = res.headers['set-cookie'];
-    let refreshToken: string | undefined = undefined;
-
-    if (setCookieHeader) {
-      // 여러 쿠키가 있을 수 있으니, X-Refresh-Token만 추출
-      const match = setCookieHeader.find((cookie: string) =>
-        cookie.startsWith('X-Refresh-Token='),
-      );
-      if (match) {
-        refreshToken = match
-          .split(';')[0] // 'X-Refresh-Token=...'
-          .split('=')[1]; // 실제 토큰 값
-      }
-    }
+    // 1. 응답에서 refresh token 추출 및 쿠키 세팅
+    const refreshToken = await handleRefreshTokenFromResponse(res);
 
     logger.info('[Server Action] 로그인 성공!');
     return {
@@ -177,12 +165,10 @@ export async function reissueToken(refreshToken: string) {
       },
     );
     logger.info('[Server Action] 토큰 재발급 성공');
+    const newRefreshToken = await handleRefreshTokenFromResponse(res);
     return {
       ...res.data,
-      refreshToken: res.headers['set-cookie']
-        ?.find((cookie: string) => cookie.startsWith('X-Refresh-Token='))
-        ?.split(';')[0]
-        .split('=')[1],
+      refreshToken: newRefreshToken,
     };
   } catch (error: any) {
     logger.error(

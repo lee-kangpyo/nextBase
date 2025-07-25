@@ -7,6 +7,7 @@ import { jwtDecode } from 'jwt-decode';
 import { MyJwtPayload } from '@/types/jwt';
 import { getTest, login, reissueToken } from '@/actions/auth';
 import { logger } from '@/utils/logger';
+import { cookies } from 'next/headers';
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -96,6 +97,7 @@ const refreshAccessToken = async (jwt: JWT) => {
     const refreshed = await reissueToken(jwt.refreshToken as string);
     jwt.accessToken = refreshed.accessToken;
     jwt.refreshToken = refreshed.refreshToken;
+
     logger.info('[JWT Callback] 토큰 재발급 성공');
     return jwt;
   } catch (e) {
