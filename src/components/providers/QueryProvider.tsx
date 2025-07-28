@@ -16,15 +16,24 @@ export default function QueryProvider({
             staleTime: 1000 * 60 * 5,
             refetchOnWindowFocus: false,
             retry: (failureCount, error) => {
+              debugger;
               const axiosError = error as AxiosError;
-              if (axiosError?.response?.status === 401) return false;
+              if (
+                axiosError?.response?.status === 401 ||
+                axiosError?.response?.status === 403
+              )
+                return false;
               return failureCount < 3;
             },
           },
           mutations: {
             retry: (failureCount, error) => {
               const axiosError = error as AxiosError;
-              if (axiosError?.response?.status === 401) return false;
+              if (
+                axiosError?.response?.status === 401 ||
+                axiosError?.response?.status === 403
+              )
+                return false;
               return failureCount < 3;
             },
           },

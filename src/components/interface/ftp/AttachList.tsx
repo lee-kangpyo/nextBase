@@ -36,7 +36,6 @@ interface PageResponse {
 }
 
 export default function AttachList() {
-  const api = useApi();
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { selectedAttachId, setSelectedAttachId } = useFtpStore();
@@ -44,6 +43,7 @@ export default function AttachList() {
   const {
     data: attachList,
     isLoading,
+    isEnabled,
     error,
   } = useAttachList(page, rowsPerPage);
 
@@ -62,7 +62,7 @@ export default function AttachList() {
       <Typography variant="h6" gutterBottom>
         첨부파일 묶음 목록
       </Typography>
-      {isLoading ? (
+      {isLoading || !isEnabled ? (
         <Box
           display="flex"
           justifyContent="center"

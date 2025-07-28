@@ -14,20 +14,13 @@ import {
 } from '@mui/material';
 import { useApi } from '@/hooks/useApi';
 import type { AxiosError } from 'axios';
+import { useAdminUserList } from '@/services/adminService';
 
 export default function UserList() {
-  const api = useApi();
-  const { data, isLoading, error } = useQuery({
-    queryKey: ['admin-user-list'],
-    enabled: api.status === 'authenticated',
-    queryFn: async () => {
-      const res = await api.get('/admin/userList');
-      return res.data;
-    },
-  });
+  const { data, isLoading, isEnabled, error } = useAdminUserList();
 
   // 조건부 랜더링
-  if (isLoading) return <CircularProgress />;
+  if (isLoading || !isEnabled) return <CircularProgress />;
 
   if (error) {
     const axiosError = error as AxiosError;
