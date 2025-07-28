@@ -6,252 +6,424 @@ import {
   Paper,
   TextField,
   Button,
-  FormControlLabel,
-  Switch,
   Stack,
-  Chip,
   IconButton,
+  Divider,
+  Chip,
+  Tooltip,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
-import DeleteIcon from '@mui/icons-material/Delete';
-import AddIcon from '@mui/icons-material/Add';
+import {
+  Send as SendIcon,
+  AttachFile as AttachFileIcon,
+  Save as SaveIcon,
+  Delete as DeleteIcon,
+  MoreVert as MoreVertIcon,
+} from '@mui/icons-material';
+import { toast } from 'react-toastify';
+import DropZone from '@/components/DropZone/DropZone';
+import EmailField from '@/components/EmailField/EmailField';
+import {
+  useEmailSendMutation,
+  useTempFileUploadMutation,
+} from '@/services/emailService';
+import { Attachment } from '@/services/emailService';
+import { EmailData } from '@/types/email';
 
 export default function EmailSendPage() {
-  const [isHtml, setIsHtml] = React.useState(false);
-  const [toEmails, setToEmails] = React.useState(['']);
-  const [ccEmails, setCcEmails] = React.useState(['']);
-  const [bccEmails, setBccEmails] = React.useState(['']);
+  const sendEmailMutation = useEmailSendMutation();
+  const tempFileUploadMutation = useTempFileUploadMutation();
 
-  const handleAddEmail = (
-    emailList: string[],
-    setEmailList: React.Dispatch<React.SetStateAction<string[]>>,
-  ) => {
-    setEmailList([...emailList, '']);
-  };
-
-  const handleRemoveEmail = (
-    emailList: string[],
-    setEmailList: React.Dispatch<React.SetStateAction<string[]>>,
-    index: number,
-  ) => {
-    const newEmails = emailList.filter((_, i) => i !== index);
-    setEmailList(newEmails);
-  };
+  const [emailData, setEmailData] = React.useState<EmailData>({
+    to: [''],
+    cc: [''],
+    bcc: [''],
+    subject: '',
+    content: '',
+    attachments: [],
+    isHtml: false,
+  });
+  const [showCc, setShowCc] = React.useState(true);
+  const [showBcc, setShowBcc] = React.useState(true);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [editingIndex, setEditingIndex] = React.useState<{
+    field: 'to' | 'cc' | 'bcc';
+    index: number;
+  } | null>(null);
 
   const handleEmailChange = (
-    emailList: string[],
-    setEmailList: React.Dispatch<React.SetStateAction<string[]>>,
+    field: 'to' | 'cc' | 'bcc',
     index: number,
     value: string,
   ) => {
-    const newEmails = [...emailList];
+    const newEmails = [...emailData[field]];
     newEmails[index] = value;
-    setEmailList(newEmails);
+    setEmailData({ ...emailData, [field]: newEmails });
+  };
+
+  const handleEmailKeyDown = (
+    field: 'to' | 'cc' | 'bcc',
+    index: number,
+    e: React.KeyboardEvent,
+  ) => {
+    if (e.key === 'Enter' || e.key === ' ' || e.key === ',') {
+      e.preventDefault();
+      const value = emailData[field][index].trim();
+      if (value && isValidEmail(value)) {
+        // 편집 모드 종료
+        setEditingIndex(null);
+        // 새 입력 필드 추가
+        const newEmails = [...emailData[field]];
+        newEmails.push('');
+        setEmailData({ ...emailData, [field]: newEmails });
+        // 새 필드를 편집 모드로 설정
+        setEditingIndex({ field, index: newEmails.length - 1 });
+      }
+    } else if (e.key === 'Escape') {
+      // 편집 모드 취소
+      setEditingIndex(null);
+    }
+  };
+
+  const handleChipClick = (field: 'to' | 'cc' | 'bcc', index: number) => {
+    if (index === -1) {
+      // 편집 모드 종료
+      setEditingIndex(null);
+    } else {
+      setEditingIndex({ field, index });
+    }
+  };
+
+  const handleChipDelete = (field: 'to' | 'cc' | 'bcc', index: number) => {
+    const newEmails = emailData[field].filter((_, i) => i !== index);
+    setEmailData({ ...emailData, [field]: newEmails });
+
+    // 편집 중인 필드가 삭제되면 편집 모드 종료
+    if (editingIndex?.field === field && editingIndex?.index === index) {
+      setEditingIndex(null);
+    }
+
+    // 참조나 숨은 참조에서 모든 이메일을 삭제하면 해당 필드를 숨김
+    if (field === 'cc' && newEmails.length === 0) {
+      setShowCc(false);
+    }
+    if (field === 'bcc' && newEmails.length === 0) {
+      setShowBcc(false);
+    }
+  };
+
+  const handleAddEmail = (field: 'to' | 'cc' | 'bcc') => {
+    const newEmails = [...emailData[field], ''];
+    setEmailData({ ...emailData, [field]: newEmails });
+    // 새로 추가된 필드를 편집 모드로 설정
+    setEditingIndex({ field, index: newEmails.length - 1 });
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    const newAttachments = emailData.attachments.filter((_, i) => i !== index);
+    setEmailData({ ...emailData, attachments: newAttachments });
+  };
+
+  const handleDropZoneFilesChange = (files: File[]) => {
+    setEmailData({ ...emailData, attachments: files });
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
 
-    const emailData = {
-      to: toEmails.filter((email) => email.trim() !== ''),
-      subject: formData.get('subject') as string,
-      text: formData.get('text') as string,
-      isHtml: isHtml,
-      cc: ccEmails.filter((email) => email.trim() !== ''),
-      bcc: bccEmails.filter((email) => email.trim() !== ''),
-      attachments: [],
-    };
+    // 유효성 검사
+    const validToEmails = emailData.to.filter((email) => email.trim() !== '');
+    if (validToEmails.length === 0) {
+      toast.error('수신자를 입력해주세요.');
+      return;
+    }
 
-    console.log('이메일 전송 데이터:', emailData);
-    // TODO: API 호출 로직 구현
+    if (!emailData.subject.trim()) {
+      toast.error('제목을 입력해주세요.');
+      return;
+    }
+
+    if (!emailData.content.trim()) {
+      toast.error('내용을 입력해주세요.');
+      return;
+    }
+
+    try {
+      // 1단계: 파일 업로드
+      const attachments: Attachment[] = [];
+
+      if (emailData.attachments.length > 0) {
+        for (const file of emailData.attachments) {
+          try {
+            const uploadResponse =
+              await tempFileUploadMutation.mutateAsync(file);
+
+            // 백엔드 응답 체크
+            if (!uploadResponse.data.url) {
+              toast.error(
+                uploadResponse.data.name || '파일 업로드에 실패했습니다.',
+              );
+              return;
+            }
+
+            // Attachment 객체 구성
+            attachments.push({
+              name: uploadResponse.data.name,
+              contentType: uploadResponse.data.contentType || file.type,
+              url: uploadResponse.data.url,
+            });
+          } catch (error) {
+            toast.error(`${file.name} 파일 업로드에 실패했습니다.`);
+            return;
+          }
+        }
+      }
+
+      // 2단계: 이메일 전송
+      const emailRequest = {
+        to: validToEmails,
+        subject: emailData.subject.trim(),
+        text: emailData.content.trim(),
+        isHtml: emailData.isHtml,
+        ...(emailData.cc.filter((email) => email.trim() !== '').length > 0 && {
+          cc: emailData.cc.filter((email) => email.trim() !== ''),
+        }),
+        ...(emailData.bcc.filter((email) => email.trim() !== '').length > 0 && {
+          bcc: emailData.bcc.filter((email) => email.trim() !== ''),
+        }),
+        ...(attachments.length > 0 && { attachments }),
+      };
+
+      await sendEmailMutation.mutateAsync(emailRequest);
+
+      // 성공 시 폼 초기화
+      setEmailData({
+        to: [''],
+        cc: [''],
+        bcc: [''],
+        subject: '',
+        content: '',
+        attachments: [],
+        isHtml: false,
+      });
+
+      toast.success('이메일이 성공적으로 전송되었습니다.');
+    } catch (error) {
+      console.error('이메일 전송 오류:', error);
+      toast.error('이메일 전송에 실패했습니다.');
+    }
+  };
+
+  const isValidEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', mt: 4, p: 3 }}>
-      <Typography variant="h4" gutterBottom>
-        이메일 전송
-      </Typography>
-
-      <Paper sx={{ p: 3, mt: 2 }}>
-        <form onSubmit={handleSubmit}>
-          <Stack spacing={3}>
-            {/* 수신자 */}
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                수신자 *
-              </Typography>
-              {toEmails.map((email, index) => (
-                <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                  <TextField
-                    fullWidth
-                    type="email"
-                    value={email}
-                    onChange={(e) =>
-                      handleEmailChange(
-                        toEmails,
-                        setToEmails,
-                        index,
-                        e.target.value,
-                      )
-                    }
-                    placeholder="이메일 주소를 입력하세요"
-                    size="small"
-                  />
-                  {toEmails.length > 1 && (
-                    <IconButton
-                      onClick={() =>
-                        handleRemoveEmail(toEmails, setToEmails, index)
-                      }
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
-                </Box>
-              ))}
-              <Button
-                startIcon={<AddIcon />}
-                onClick={() => handleAddEmail(toEmails, setToEmails)}
-                sx={{ mt: 1 }}
-              >
-                수신자 추가
-              </Button>
-            </Box>
-
-            {/* 참조 */}
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                참조 (선택)
-              </Typography>
-              {ccEmails.map((email, index) => (
-                <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                  <TextField
-                    fullWidth
-                    type="email"
-                    value={email}
-                    onChange={(e) =>
-                      handleEmailChange(
-                        ccEmails,
-                        setCcEmails,
-                        index,
-                        e.target.value,
-                      )
-                    }
-                    placeholder="참조 이메일 주소를 입력하세요"
-                    size="small"
-                  />
-                  {ccEmails.length > 1 && (
-                    <IconButton
-                      onClick={() =>
-                        handleRemoveEmail(ccEmails, setCcEmails, index)
-                      }
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
-                </Box>
-              ))}
-              <Button
-                startIcon={<AddIcon />}
-                onClick={() => handleAddEmail(ccEmails, setCcEmails)}
-                sx={{ mt: 1 }}
-              >
-                참조 추가
-              </Button>
-            </Box>
-
-            {/* 숨은 참조 */}
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                숨은 참조 (선택)
-              </Typography>
-              {bccEmails.map((email, index) => (
-                <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1 }}>
-                  <TextField
-                    fullWidth
-                    type="email"
-                    value={email}
-                    onChange={(e) =>
-                      handleEmailChange(
-                        bccEmails,
-                        setBccEmails,
-                        index,
-                        e.target.value,
-                      )
-                    }
-                    placeholder="숨은 참조 이메일 주소를 입력하세요"
-                    size="small"
-                  />
-                  {bccEmails.length > 1 && (
-                    <IconButton
-                      onClick={() =>
-                        handleRemoveEmail(bccEmails, setBccEmails, index)
-                      }
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  )}
-                </Box>
-              ))}
-              <Button
-                startIcon={<AddIcon />}
-                onClick={() => handleAddEmail(bccEmails, setBccEmails)}
-                sx={{ mt: 1 }}
-              >
-                숨은 참조 추가
-              </Button>
-            </Box>
-
-            {/* 제목 */}
-            <TextField
-              name="subject"
-              label="제목 *"
-              fullWidth
-              required
-              placeholder="이메일 제목을 입력하세요"
-            />
-
-            {/* HTML 모드 토글 */}
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={isHtml}
-                  onChange={(e) => setIsHtml(e.target.checked)}
-                />
+    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* 헤더 */}
+      <Paper sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: 'bold' }}>
+            새 메시지
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="contained"
+              startIcon={<SendIcon />}
+              disabled={
+                !emailData.to[0]?.trim() ||
+                !emailData.subject.trim() ||
+                !emailData.content.trim() ||
+                sendEmailMutation.isPending
               }
-              label="HTML 모드"
-            />
+              onClick={(e) => {
+                e.preventDefault();
+                const form = document.querySelector('form');
+                if (form) {
+                  form.dispatchEvent(new Event('submit', { bubbles: true }));
+                }
+              }}
+            >
+              {sendEmailMutation.isPending ? '전송 중...' : '보내기'}
+            </Button>
+            <Tooltip title="더보기">
+              <IconButton
+                size="small"
+                onClick={(e) => setAnchorEl(e.currentTarget)}
+              >
+                <MoreVertIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </Box>
+      </Paper>
+
+      {/* 이메일 폼 */}
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
+        <Paper
+          sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+        >
+          <form
+            onSubmit={handleSubmit}
+            style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+          >
+            {/* 수신자 필드 */}
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <Stack spacing={2}>
+                {/* 받는 사람 */}
+                <EmailField
+                  label="받는 사람"
+                  emails={emailData.to}
+                  editingIndex={editingIndex}
+                  field="to"
+                  onEmailChange={handleEmailChange}
+                  onEmailKeyDown={handleEmailKeyDown}
+                  onChipClick={handleChipClick}
+                  onChipDelete={handleChipDelete}
+                  onAddEmail={handleAddEmail}
+                />
+
+                {/* 참조 */}
+                <EmailField
+                  label="참조"
+                  emails={emailData.cc}
+                  editingIndex={editingIndex}
+                  field="cc"
+                  onEmailChange={handleEmailChange}
+                  onEmailKeyDown={handleEmailKeyDown}
+                  onChipClick={handleChipClick}
+                  onChipDelete={handleChipDelete}
+                  onAddEmail={handleAddEmail}
+                />
+
+                {/* 숨은 참조 */}
+                <EmailField
+                  label="숨은 참조"
+                  emails={emailData.bcc}
+                  editingIndex={editingIndex}
+                  field="bcc"
+                  onEmailChange={handleEmailChange}
+                  onEmailKeyDown={handleEmailKeyDown}
+                  onChipClick={handleChipClick}
+                  onChipDelete={handleChipDelete}
+                  onAddEmail={handleAddEmail}
+                />
+              </Stack>
+            </Box>
+
+            {/* 제목 필드 */}
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <TextField
+                fullWidth
+                placeholder="제목"
+                value={emailData.subject}
+                onChange={(e) =>
+                  setEmailData({ ...emailData, subject: e.target.value })
+                }
+                variant="outlined"
+                sx={{
+                  '& .MuiInputBase-input': {
+                    fontSize: '1.1rem',
+                    fontWeight: 'bold',
+                  },
+                }}
+              />
+            </Box>
+
+            {/* 첨부파일 */}
+            {emailData.attachments.length > 0 && (
+              <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  첨부파일 ({emailData.attachments.length})
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {emailData.attachments.map((file, index) => (
+                    <Chip
+                      key={index}
+                      label={`${file.name} (${formatFileSize(file.size)})`}
+                      onDelete={() => handleRemoveAttachment(index)}
+                      variant="outlined"
+                      size="small"
+                    />
+                  ))}
+                </Box>
+              </Box>
+            )}
+
+            {/* 드롭존 */}
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <DropZone
+                onFilesChange={handleDropZoneFilesChange}
+                showFileList={false}
+                width="100%"
+              />
+            </Box>
 
             {/* 본문 */}
-            <TextField
-              name="text"
-              label="본문 *"
-              fullWidth
-              required
-              multiline
-              rows={8}
-              placeholder={
-                isHtml
-                  ? '<h1>제목</h1><p>내용을 입력하세요</p>'
-                  : '이메일 내용을 입력하세요'
-              }
-            />
+            <Box sx={{ flex: 1, p: 2 }}>
+              <TextField
+                fullWidth
+                multiline
+                placeholder="메시지를 입력하세요..."
+                value={emailData.content}
+                onChange={(e) =>
+                  setEmailData({ ...emailData, content: e.target.value })
+                }
+                variant="outlined"
+                sx={{
+                  height: '100%',
+                  '& .MuiInputBase-root': {
+                    height: '100%',
+                    alignItems: 'flex-start',
+                  },
+                  '& .MuiInputBase-input': {
+                    height: '100% !important',
+                    overflow: 'auto',
+                  },
+                }}
+              />
+            </Box>
+          </form>
+        </Paper>
+      </Box>
 
-            {/* 전송 버튼 */}
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              size="large"
-              sx={{ mt: 2 }}
-            >
-              이메일 전송
-            </Button>
-          </Stack>
-        </form>
-      </Paper>
+      {/* 메뉴 */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+      >
+        <MenuItem>
+          <ListItemIcon>
+            <SaveIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>임시저장</ListItemText>
+        </MenuItem>
+        <MenuItem>
+          <ListItemIcon>
+            <DeleteIcon fontSize="small" />
+          </ListItemIcon>
+          <ListItemText>삭제</ListItemText>
+        </MenuItem>
+      </Menu>
     </Box>
   );
 }

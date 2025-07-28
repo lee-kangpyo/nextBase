@@ -15,8 +15,12 @@ import DeleteIcon from '@mui/icons-material/Delete';
 
 export default function DropZone({
   onFilesChange,
+  showFileList = true,
+  width = 'auto',
 }: {
   onFilesChange?: (files: File[]) => void;
+  showFileList?: boolean;
+  width?: string | number;
 }) {
   const [files, setFiles] = useState<File[]>([]);
 
@@ -50,9 +54,8 @@ export default function DropZone({
         textAlign: 'center',
         bgcolor: isDragActive ? 'action.hover' : 'background.paper',
         cursor: 'pointer',
-        maxWidth: 500,
+        width: width,
         mx: 'auto',
-        mt: 4,
       }}
     >
       <input {...getInputProps()} />
@@ -61,26 +64,28 @@ export default function DropZone({
           ? '여기로 파일을 놓으세요!'
           : '여기로 파일을 드래그하거나 클릭해서 선택하세요.'}
       </Typography>
-      <List>
-        {files.map((file, idx) => (
-          <ListItem
-            key={file.name + idx}
-            secondaryAction={
-              <IconButton
-                edge="end"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(idx);
-                }}
-              >
-                <DeleteIcon />
-              </IconButton>
-            }
-          >
-            <ListItemText primary={file.name} />
-          </ListItem>
-        ))}
-      </List>
+      {showFileList && (
+        <List>
+          {files.map((file, idx) => (
+            <ListItem
+              key={file.name + idx}
+              secondaryAction={
+                <IconButton
+                  edge="end"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDelete(idx);
+                  }}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              }
+            >
+              <ListItemText primary={file.name} />
+            </ListItem>
+          ))}
+        </List>
+      )}
     </Paper>
   );
 }

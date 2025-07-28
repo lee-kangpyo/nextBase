@@ -60,7 +60,7 @@ const Drawer = styled(MuiDrawer, {
 const menuItems = [
   { label: '대시보드', path: '/main', icon: <DashboardIcon /> },
   { label: 'FTP 전송', path: '/interface/ftp', icon: <CloudUploadIcon /> },
-  { label: '이메일 전송', path: '/interface/send', icon: <EmailIcon /> },
+  { label: '이메일 전송', path: '/interface/email', icon: <EmailIcon /> },
   { label: '회원관리', path: '/members', icon: <PersonIcon /> },
 ];
 
