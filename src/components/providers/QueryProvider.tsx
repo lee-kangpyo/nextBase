@@ -16,7 +16,6 @@ export default function QueryProvider({
             staleTime: 1000 * 60 * 5,
             refetchOnWindowFocus: false,
             retry: (failureCount, error) => {
-              debugger;
               const axiosError = error as AxiosError;
               if (
                 axiosError?.response?.status === 401 ||

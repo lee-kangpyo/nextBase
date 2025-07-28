@@ -15,6 +15,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 const drawerWidth = 220;
 const miniWidth = 56;
@@ -59,6 +60,7 @@ const Drawer = styled(MuiDrawer, {
 const menuItems = [
   { label: '대시보드', path: '/main', icon: <DashboardIcon /> },
   { label: 'FTP 전송', path: '/interface/ftp', icon: <CloudUploadIcon /> },
+  { label: '이메일 전송', path: '/interface/send', icon: <EmailIcon /> },
   { label: '회원관리', path: '/members', icon: <PersonIcon /> },
 ];
 

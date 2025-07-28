@@ -53,7 +53,6 @@ export function useApi() {
     try {
       // NextAuth의 update를 호출하여 토큰 갱신 시도
       const result = await update();
-      // update()는 Session | null을 반환하므로 error 속성은 없음
       return result?.accessToken || null;
     } catch (error) {
       console.error('토큰 갱신 실패:', error);

@@ -6,8 +6,7 @@ import { AuthSession, AuthUser } from '@/types/auth';
 import { jwtDecode } from 'jwt-decode';
 import { MyJwtPayload } from '@/types/jwt';
 import { getTest, login, reissueToken } from '@/actions/auth';
-import { logger } from '@/utils/logger';
-import { cookies } from 'next/headers';
+import { authLogger } from '@/utils/logger';
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -51,7 +50,7 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async jwt({ token, user }: { token: JWT; user?: AuthUser }) {
-      logger.info('jwt callback 호출');
+      authLogger.info('[JWT Callback] 호출');
       if (user) {
         token.accessToken = user.accessToken;
         token.refreshToken = user.refreshToken;
@@ -62,17 +61,23 @@ export const authOptions: NextAuthOptions = {
       // accessToken 만료 체크
       const now = Math.floor(Date.now() / 1000);
       const payload = jwtDecode(token.accessToken as string);
-      logger.info(
-        `[JWT Callback] 토큰 만료 체크 - 현재: ${now}, 만료: ${payload.exp}`,
+      const timeUntilExpiry = payload.exp ? payload.exp - now : 0;
+
+      authLogger.info(
+        `[JWT Callback] 토큰 만료 체크 - 현재: ${now}, 만료: ${payload.exp}, 남은 시간: ${timeUntilExpiry}초`,
       );
-      if (payload.exp && payload.exp > now) {
+
+      // 토큰이 유효하고 5분 이상 남아있으면 그대로 반환
+      if (payload.exp && timeUntilExpiry > 300) {
         return token;
       }
 
+      // 토큰이 만료되었거나 곧 만료될 예정이면 갱신
+      authLogger.info('[JWT Callback] 토큰 갱신 필요 - 갱신 시도');
       return refreshAccessToken(token);
     },
     async session({ session, token }: { session: Session; token: JWT }) {
-      logger.info('session callback 호출');
+      authLogger.info('[SessionCallback] 호출');
       session.user = {
         userName: token.userName as string,
         roles: token.roles as string[],
@@ -90,18 +95,28 @@ export const authOptions: NextAuthOptions = {
 
 const refreshAccessToken = async (jwt: JWT) => {
   if (!jwt.refreshToken) {
-    logger.error('[JWT Callback] refresh token이 없습니다.');
+    authLogger.error(
+      '[JWT Callback - refreshAccessToken] refresh token이 없습니다.',
+    );
     throw new Error('No refresh token');
   }
+
+  authLogger.info('[JWT Callback - refreshAccessToken] 토큰 재발급 시작');
   try {
     const refreshed = await reissueToken(jwt.refreshToken as string);
     jwt.accessToken = refreshed.accessToken;
     jwt.refreshToken = refreshed.refreshToken;
 
-    logger.info('[JWT Callback] 토큰 재발급 성공');
+    authLogger.info('[JWT Callback - refreshAccessToken] 토큰 재발급 성공');
     return jwt;
   } catch (e) {
-    logger.error('[JWT Callback] 토큰 재발급 실패:', e);
+    authLogger.error(
+      '[JWT Callback - refreshAccessToken] 토큰 재발급 실패:',
+      e,
+    );
+    // 토큰 갱신 실패 시 기존 토큰을 제거하여 재로그인 유도
+    jwt.accessToken = undefined;
+    jwt.refreshToken = undefined;
     throw e;
   }
 };

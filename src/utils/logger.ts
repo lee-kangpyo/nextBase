@@ -2,6 +2,9 @@
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 const LOG_LEVEL = process.env.NEXT_PUBLIC_LOG_LEVEL || 'info';
+const MIDDLEWARE_LOG_ENABLED =
+  process.env.NEXT_PUBLIC_MIDDLEWARE_LOG === 'true';
+const AUTH_LOG_ENABLED = process.env.NEXT_PUBLIC_AUTH_LOG === 'true';
 
 const levelOrder: Record<LogLevel, number> = {
   debug: 0,
@@ -26,5 +29,43 @@ export const logger = {
   },
   error: (...args: any[]) => {
     if (shouldLog('error')) console.error('[ERROR]', ...args);
+  },
+};
+
+// 미들웨어 전용 로거
+export const middlewareLogger = {
+  info: (...args: any[]) => {
+    if (MIDDLEWARE_LOG_ENABLED) {
+      console.info('[MIDDLEWARE]', ...args);
+    }
+  },
+  warn: (...args: any[]) => {
+    if (MIDDLEWARE_LOG_ENABLED) {
+      console.warn('[MIDDLEWARE]', ...args);
+    }
+  },
+  error: (...args: any[]) => {
+    if (MIDDLEWARE_LOG_ENABLED) {
+      console.error('[MIDDLEWARE]', ...args);
+    }
+  },
+};
+
+// 인증 전용 로거
+export const authLogger = {
+  info: (...args: any[]) => {
+    if (AUTH_LOG_ENABLED) {
+      console.info('[AUTH]', ...args);
+    }
+  },
+  warn: (...args: any[]) => {
+    if (AUTH_LOG_ENABLED) {
+      console.warn('[AUTH]', ...args);
+    }
+  },
+  error: (...args: any[]) => {
+    if (AUTH_LOG_ENABLED) {
+      console.error('[AUTH]', ...args);
+    }
   },
 };
