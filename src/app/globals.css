@@ -1,6 +1,35 @@
 @layer theme, base, mui, components, utilities;
 @import 'tailwindcss';
 
+/* 자동완성 스타일 오버라이드 */
+@layer base {
+  /* Material-UI TextField 자동완성 스타일 수정 */
+  .MuiTextField-root input:-webkit-autofill,
+  .MuiTextField-root input:-webkit-autofill:hover,
+  .MuiTextField-root input:-webkit-autofill:focus,
+  .MuiTextField-root input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px white inset !important;
+    -webkit-text-fill-color: inherit !important;
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Material-UI TextField 라벨 자동완성 시 올라가도록 수정 */
+  .MuiTextField-root input:-webkit-autofill ~ .MuiInputLabel-root,
+  .MuiTextField-root input:-webkit-autofill:focus ~ .MuiInputLabel-root {
+    transform: translate(14px, -9px) scale(0.75) !important;
+    color: rgb(25, 118, 210) !important;
+  }
+
+  /* Material-UI TextField 아웃라인 자동완성 시 포커스 스타일 */
+  .MuiTextField-root
+    input:-webkit-autofill
+    ~ .MuiOutlinedInput-root
+    .MuiOutlinedInput-notchedOutline {
+    border-color: rgb(25, 118, 210) !important;
+    border-width: 2px !important;
+  }
+}
+
 @theme inline {
   /* Material UI typography */
   --font-h1: var(--mui-font-h1);
@@ -301,16 +330,16 @@
 
 /* Material UI typography utilities */
 @utility typography-* {
-  font: --value(--font- *);
+  font: --value(--font-*);
 }
 
 /* Material UI overlay utilities */
 @utility overlay-* {
-  background-image: --value(--overlay- *);
+  background-image: --value(--overlay-*);
 }
 
 /* Material UI elevation utilities */
 @utility elevation-* {
-  background-image: --value(--overlay- *);
-  box-shadow: --value(--shadow- *);
+  background-image: --value(--overlay-*);
+  box-shadow: --value(--shadow-*);
 }

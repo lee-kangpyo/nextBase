@@ -5,6 +5,7 @@ import { middlewareLogger } from '@/utils/logger';
 
 // 공통 퍼블릭 패스 정의
 const PUBLIC_PATHS = [
+  '/',
   '/login',
   '/register',
   '/forgot-password',
@@ -29,7 +30,15 @@ async function handleLoggedInRedirect(
 ): Promise<NextResponse | undefined> {
   const { pathname } = req.nextUrl;
 
-  // /main 경로는 제외하고 실제 공개 페이지만 처리
+  // 로그인되지 않은 사용자가 /에 접속하면 /login으로 리다이렉트
+  if (!token && pathname === '/') {
+    middlewareLogger.info(
+      `[LoggedInRedirect] 비로그인 사용자가 ${pathname} 접근 시도 -> /login으로 리다이렉트.`,
+    );
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+
+  // 로그인된 사용자가 공개 페이지에 접속하면 /main으로 리다이렉트
   if (token && isPublicPath(pathname) && !pathname.startsWith('/main')) {
     middlewareLogger.info(
       `[LoggedInRedirect] 로그인된 사용자(${token.sub})가 ${pathname} 접근 시도 -> /main으로 리다이렉트.`,

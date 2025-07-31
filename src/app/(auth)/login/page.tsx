@@ -17,6 +17,7 @@ import { login } from '@/actions/auth';
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { signIn } from 'next-auth/react';
+import styles from './login.module.scss';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -144,37 +145,11 @@ export default function LoginPage() {
         {/* 구글 로그인 버튼 */}
         <Button
           onClick={handleGoogleLogin}
-          disabled={isGoogleLoading || isNaverLoading}
+          disabled={isSubmitting || isGoogleLoading || isNaverLoading}
           variant="outlined"
           fullWidth
-          sx={{
-            mb: 3,
-            py: 1.5,
-            borderColor: '#dadce0',
-            color: '#3c4043',
-            backgroundColor: '#ffffff',
-            '&:hover': {
-              backgroundColor: '#f8f9fa',
-              borderColor: '#dadce0',
-            },
-            textTransform: 'none',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            position: 'relative',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              left: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 18,
-              height: 18,
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23FFC107' d='M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z'/%3E%3Cpath fill='%23FF3D00' d='M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z'/%3E%3Cpath fill='%234CAF50' d='M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z'/%3E%3Cpath fill='%231976D2' d='M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z'/%3E%3C/svg%3E\")",
-              backgroundSize: 'contain',
-              backgroundRepeat: 'no-repeat',
-            },
-          }}
+          sx={{ mb: 3, py: 1.5 }}
+          className={styles.googleButton}
         >
           {isGoogleLoading ? '로그인 중...' : 'Google로 로그인'}
         </Button>
@@ -182,37 +157,11 @@ export default function LoginPage() {
         {/* 네이버 로그인 버튼 */}
         <Button
           onClick={handleNaverLogin}
-          disabled={isGoogleLoading || isNaverLoading}
+          disabled={isSubmitting || isGoogleLoading || isNaverLoading}
           variant="outlined"
           fullWidth
-          sx={{
-            mb: 2,
-            py: 1.5,
-            borderColor: '#03c75a',
-            color: '#ffffff',
-            backgroundColor: '#03c75a',
-            '&:hover': {
-              backgroundColor: '#02b351',
-              borderColor: '#02b351',
-            },
-            textTransform: 'none',
-            fontSize: '0.875rem',
-            fontWeight: 500,
-            position: 'relative',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              left: 12,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              width: 18,
-              height: 18,
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Cpath fill='%23ffffff' d='M16.273 12.846L7.376 14.33l.318-2.196 8.897-1.484zM20.017 9.032l-9.468 1.578.239-1.652 9.468-1.578zM23.338 6.97l-10.789 1.798.159-1.105 10.789-1.798zM26.659 4.908l-12.11 2.018.08-.554 12.11-2.018zM30.4 1.094L13.77 3.112l.04-.277L30.44.817zM32.721-.968L15.091 1.05l.02-.138L32.741-1.106z'/%3E%3C/svg%3E\")",
-              backgroundSize: 'contain',
-              backgroundRepeat: 'no-repeat',
-            },
-          }}
+          sx={{ mb: 2, py: 1.5 }}
+          className={styles.naverButton}
         >
           {isNaverLoading ? '로그인 중...' : '네이버로 로그인'}
         </Button>
@@ -229,6 +178,7 @@ export default function LoginPage() {
           onSubmit={handleSubmit}
           noValidate
           sx={{ width: '100%' }}
+          className={styles.textField}
         >
           <TextField
             margin="normal"
