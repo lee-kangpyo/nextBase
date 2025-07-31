@@ -1,20 +1,129 @@
 import NextAuth, { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
+import NaverProvider from 'next-auth/providers/naver';
 import { JWT } from 'next-auth/jwt';
 import { Session } from 'next-auth';
 import { AuthSession, AuthUser } from '@/types/auth';
 import { jwtDecode } from 'jwt-decode';
 import { MyJwtPayload } from '@/types/jwt';
-import { getTest, login, reissueToken } from '@/actions/auth';
+import {
+  getTest,
+  login,
+  reissueToken,
+  googleLogin,
+  naverLogin,
+} from '@/actions/auth';
 import { authLogger } from '@/utils/logger';
+
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code',
+        },
+      },
+      async profile(profile) {
+        // 서버 액션을 사용하여 구글 로그인 처리
+        try {
+          const result = await googleLogin({
+            email: profile.email,
+            name: profile.name,
+            sub: profile.sub,
+          });
+
+          if (!result.success) {
+            throw new Error(
+              result.message || '구글 로그인 처리에 실패했습니다.',
+            );
+          }
+
+          // result.data가 존재하는지 확인
+          if (!result.data) {
+            throw new Error('구글 로그인 응답 데이터가 없습니다.');
+          }
+
+          const payload = jwtDecode<MyJwtPayload>(result.data.accessToken);
+
+          return {
+            id: profile.sub,
+            accessToken: result.data.accessToken,
+            refreshToken: result.data.refreshToken,
+            userName: result.data.userName,
+            roles: payload.roles,
+          };
+        } catch (error) {
+          authLogger.error('[GoogleProvider] 구글 로그인 처리 실패:', error);
+          throw error;
+        }
+      },
+    }),
+    NaverProvider({
+      clientId: process.env.NAVER_CLIENT_ID as string,
+      clientSecret: process.env.NAVER_CLIENT_SECRET as string,
+      authorization: {
+        params: {
+          response_type: 'code',
+        },
+      },
+      async profile(profile) {
+        // 서버 액션을 사용하여 네이버 로그인 처리
+        authLogger.info('[NaverProvider] 네이버 프로필 데이터 받음:', profile);
+
+        // 네이버 API 응답 구조에 맞게 데이터 매핑
+        const naverProfile = {
+          id: profile.response?.id || profile.id,
+          email: profile.response?.email || profile.email,
+          name: profile.response?.name || profile.name,
+        };
+
+        authLogger.info('[NaverProvider] 매핑된 네이버 프로필:', naverProfile);
+
+        try {
+          const result = await naverLogin({
+            email: naverProfile.email,
+            name: naverProfile.name,
+            sub: naverProfile.id,
+          });
+
+          authLogger.info('[NaverProvider] naverLogin 결과:', result);
+
+          if (!result.success) {
+            throw new Error(
+              result.message || '네이버 로그인 처리에 실패했습니다.',
+            );
+          }
+
+          // result.data가 존재하는지 확인
+          if (!result.data) {
+            throw new Error('네이버 로그인 응답 데이터가 없습니다.');
+          }
+
+          const payload = jwtDecode<MyJwtPayload>(result.data.accessToken);
+
+          return {
+            id: naverProfile.id,
+            accessToken: result.data.accessToken,
+            refreshToken: result.data.refreshToken,
+            userName: result.data.userName,
+            roles: payload.roles,
+          };
+        } catch (error) {
+          authLogger.error('[NaverProvider] 네이버 로그인 처리 실패:', error);
+          throw error;
+        }
+      },
+    }),
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        accessToken: { label: 'Access Token', type: 'text' },
-        refreshToken: { label: 'Refresh Token', type: 'text' },
-        user: { label: 'User', type: 'text' },
+        username: { label: 'Username', type: 'text' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials: Record<string, string> | undefined) {
         if (!credentials) return null;
@@ -29,7 +138,6 @@ export const authOptions: NextAuthOptions = {
           if (!res) return null;
 
           if (!res.success) {
-            // Server Action에서 실패한 경우 에러 메시지를 throw
             throw new Error(res.message || '로그인에 실패했습니다.');
           }
 
@@ -48,6 +156,10 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
+  pages: {
+    signIn: '/login',
+    error: '/login',
+  },
   callbacks: {
     async jwt({ token, user }: { token: JWT; user?: AuthUser }) {
       authLogger.info('[JWT Callback] 호출');

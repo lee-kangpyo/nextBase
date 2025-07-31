@@ -225,3 +225,95 @@ export async function resetPassword(userId: string) {
     }
   }
 }
+
+/**
+ * 구글 로그인을 처리하는 Server Action
+ * - 구글 사용자 정보로 백엔드 토큰 발급
+ * - NextAuth.js에서 호출하여 토큰 처리
+ * @param profile 구글 사용자 프로필 정보
+ * @returns 토큰 및 사용자 정보
+ */
+export async function googleLogin(profile: {
+  email?: string;
+  name?: string;
+  sub?: string;
+}) {
+  logger.info(`[Server Action] 구글 로그인 요청 시작: ${profile.email}`);
+
+  try {
+    const formData = new FormData();
+    formData.append('email', profile.email || '');
+    formData.append('name', profile.name || '');
+    formData.append('googleId', profile.sub || '');
+
+    // apiClientWithoutToken을 사용하여 백엔드 API 호출 (인증 불필요)
+    const res = await apiClientWithoutToken.post(`${API_URL}/google`, formData);
+
+    // 1. 응답에서 refresh token 추출 및 쿠키 세팅
+    const refreshToken = await handleRefreshTokenFromResponse(res);
+
+    logger.info('[Server Action] 구글 로그인 성공!');
+
+    return {
+      success: true,
+      data: {
+        ...res.data,
+        refreshToken,
+      },
+    };
+  } catch (error: any) {
+    const message = error.response?.data || error.message;
+    const errorMessage = message || '구글 로그인 중 알 수 없는 오류 발생';
+    logger.error('[Server Action] 구글 로그인 처리 중 오류:', errorMessage);
+    return {
+      success: false,
+      message: errorMessage,
+    };
+  }
+}
+
+/**
+ * 네이버 로그인을 처리하는 Server Action
+ * - 네이버 사용자 정보로 백엔드 토큰 발급
+ * - NextAuth.js에서 호출하여 토큰 처리
+ * @param profile 네이버 사용자 프로필 정보
+ * @returns 토큰 및 사용자 정보
+ */
+export async function naverLogin(profile: {
+  email?: string;
+  name?: string;
+  sub?: string;
+}) {
+  logger.info(`[Server Action] 네이버 로그인 요청 시작: ${profile.email}`);
+
+  try {
+    const formData = new FormData();
+    formData.append('email', profile.email || '');
+    formData.append('name', profile.name || '');
+    formData.append('naverId', profile.sub || '');
+
+    // apiClientWithoutToken을 사용하여 백엔드 API 호출 (인증 불필요)
+    const res = await apiClientWithoutToken.post(`${API_URL}/naver`, formData);
+
+    // 1. 응답에서 refresh token 추출 및 쿠키 세팅
+    const refreshToken = await handleRefreshTokenFromResponse(res);
+
+    logger.info('[Server Action] 네이버 로그인 성공!');
+
+    return {
+      success: true,
+      data: {
+        ...res.data,
+        refreshToken,
+      },
+    };
+  } catch (error: any) {
+    const message = error.response?.data || error.message;
+    const errorMessage = message || '네이버 로그인 중 알 수 없는 오류 발생';
+    logger.error('[Server Action] 네이버 로그인 처리 중 오류:', errorMessage);
+    return {
+      success: false,
+      message: errorMessage,
+    };
+  }
+}

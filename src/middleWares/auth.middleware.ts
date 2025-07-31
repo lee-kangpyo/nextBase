@@ -5,7 +5,6 @@ import { middlewareLogger } from '@/utils/logger';
 
 // 공통 퍼블릭 패스 정의
 const PUBLIC_PATHS = [
-  '/',
   '/login',
   '/register',
   '/forgot-password',

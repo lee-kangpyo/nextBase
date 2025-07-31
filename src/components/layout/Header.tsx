@@ -44,7 +44,12 @@ export default function Header() {
 
   // 인증된 상태일 때만 UI 표시 (인증되지 않은 사용자는 로그인 화면으로 리다이렉트됨)
   return (
-    <AppBar position="static" color="primary" elevation={2}>
+    <AppBar
+      position="sticky"
+      color="primary"
+      elevation={2}
+      sx={{ zIndex: 1200 }}
+    >
       <Toolbar sx={{ justifyContent: 'space-between' }}>
         <Typography variant="h6" fontWeight="bold">
           MyService
