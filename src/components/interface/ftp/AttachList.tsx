@@ -1,6 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import {
   Table,
   TableBody,
@@ -15,7 +14,6 @@ import {
   Alert,
   Box,
 } from '@mui/material';
-import { useApi } from '@/hooks/useApi';
 import { useAttachList } from '@/services/interService';
 import dayjs from 'dayjs';
 import AttachFileList from './AttachFileList';

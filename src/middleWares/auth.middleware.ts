@@ -54,12 +54,19 @@ async function handleAuthorization(
   token: any,
 ): Promise<NextResponse | undefined> {
   const { pathname } = req.nextUrl;
-  if (pathname.startsWith('/admin') && token?.role !== 'admin') {
-    middlewareLogger.info(
-      `[Authorization] 비인가 사용자(${token?.sub || '비로그인'})가 /admin 접근 시도 -> /denied로 리다이렉트.`,
-    );
-    return NextResponse.redirect(new URL('/denied', req.url));
+  // /admin 경로에 대한 권한 체크
+  if (pathname.startsWith('/admin')) {
+    const userRoles = token?.roles || [];
+    const hasAdminRole = userRoles.includes('ROLE_ADMIN');
+
+    if (!hasAdminRole) {
+      middlewareLogger.info(
+        `[Authorization] 비인가 사용자(${token?.sub || '비로그인'})가 /admin 접근 시도 -> /denied로 리다이렉트.`,
+      );
+      return NextResponse.redirect(new URL('/denied', req.url));
+    }
   }
+
   return undefined;
 }
 
