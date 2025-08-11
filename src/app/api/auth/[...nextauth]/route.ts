@@ -16,7 +16,7 @@ import {
 } from '@/actions/auth';
 import { authLogger } from '@/utils/logger';
 
-export const authOptions: NextAuthOptions = {
+const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID as string,

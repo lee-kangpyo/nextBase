@@ -378,9 +378,15 @@ export default function IconSelector({
           />
 
           <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-            <Grid container spacing={1}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))',
+                gap: 1,
+              }}
+            >
               {filteredIcons.map(({ name, icon: IconComponent }) => (
-                <Grid item xs={3} sm={2} md={1} key={name}>
+                <Box key={name}>
                   <Chip
                     icon={<IconComponent />}
                     label={name}
@@ -392,9 +398,9 @@ export default function IconSelector({
                       '&:hover': { backgroundColor: 'action.hover' },
                     }}
                   />
-                </Grid>
+                </Box>
               ))}
-            </Grid>
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>

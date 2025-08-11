@@ -14,12 +14,12 @@ import {
 import NextLink from 'next/link'; // Next.js의 Link 컴포넌트를 MUI Link와 함께 사용
 import { useRouter, useSearchParams } from 'next/navigation';
 import { login } from '@/actions/auth';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { toast } from 'react-toastify';
 import { signIn } from 'next-auth/react';
 import styles from './login.module.scss';
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -230,5 +230,13 @@ export default function LoginPage() {
         </Box>
       </Box>
     </Container>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div>로딩 중...</div>}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

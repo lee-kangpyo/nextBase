@@ -30,26 +30,18 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import * as MuiIcons from '@mui/icons-material';
-import {
-  useMenuResources,
-  useCreateMenuResource,
-  useUpdateMenuResource,
-  useDeleteMenuResource,
-} from '@/services/adminService';
+import { useResourceService } from '@/services/admin';
 import { MenuResource, MenuResourceRequest } from '@/types/menu';
 import DataLoader from '@/components/DataLoader';
 import IconSelector from '@/components/IconSelector/IconSelector';
 
 export default function MenuResourcesPage() {
   const {
-    data: menuResources,
-    isLoading,
-    isFetching,
-    isEnabled,
-  } = useMenuResources();
-  const createMenuResource = useCreateMenuResource();
-  const updateMenuResource = useUpdateMenuResource();
-  const deleteMenuResource = useDeleteMenuResource();
+    menuResources: { data: menuResources, isLoading, isFetching, isEnabled },
+    createMenuResource,
+    updateMenuResource,
+    deleteMenuResource,
+  } = useResourceService();
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editingResource, setEditingResource] = useState<MenuResource | null>(

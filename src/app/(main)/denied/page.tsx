@@ -46,14 +46,11 @@ export default function DeniedPage() {
           >
             메인으로 이동
           </Button>
-          <Button
-            variant="outlined"
-            onClick={() => router.back()}
-          >
+          <Button variant="outlined" onClick={() => router.back()}>
             이전 페이지로
           </Button>
         </Paper>
       </Box>
     </Container>
   );
-} 
+}

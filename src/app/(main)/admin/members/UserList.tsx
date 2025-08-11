@@ -30,24 +30,22 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import type { AxiosError } from 'axios';
-import {
-  useAdminUserList,
-  useRoles,
-  useAddUserRole,
-  useRemoveUserRole,
-  useActivateUser,
-  useDeactivateUser,
-  useResetLoginFailure,
-} from '@/services/adminService';
+import { useUserService, useRoleService } from '@/services/admin';
 
 export default function UserList() {
-  const { data, isLoading, isFetching, isEnabled, error } = useAdminUserList();
-  const { data: roles } = useRoles();
-  const addUserRole = useAddUserRole();
-  const removeUserRole = useRemoveUserRole();
-  const activateUser = useActivateUser();
-  const deactivateUser = useDeactivateUser();
-  const resetLoginFailure = useResetLoginFailure();
+  const {
+    adminUserList: { data, isLoading, isFetching, isEnabled, error },
+  } = useUserService();
+  const {
+    roles: { data: roles },
+  } = useRoleService();
+  const {
+    addUserRole,
+    removeUserRole,
+    activateUser,
+    deactivateUser,
+    resetLoginFailure,
+  } = useUserService();
 
   // 권한 관리 상태
   const [selectedUser, setSelectedUser] = useState<any>(null);

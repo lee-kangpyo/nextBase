@@ -1,7 +1,7 @@
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { AuthSession } from '@/types/auth';
 import axios from 'axios';
 import { getServerSession } from 'next-auth';
+import { NextAuthOptions } from 'next-auth';
 
 // 환경 변수 사용: 백엔드 API의 기본 URL을 설정합니다.
 // .env.local 파일에 NEXT_PUBLIC_API_URL=http://localhost:8080/api 와 같이 추가하세요.
@@ -38,6 +38,12 @@ export const useApiClient = axios.create({
 // 요청 인터셉터 - 모든 요청이 백엔드로 보내지기 전에 실행.
 apiClientServer.interceptors.request.use(
   async (config) => {
+    // authOptions를 직접 정의하여 사용
+    const authOptions: NextAuthOptions = {
+      providers: [], // 빈 배열로 초기화 (실제 사용되지 않음)
+      secret: process.env.NEXTAUTH_SECRET,
+    };
+
     const session = (await getServerSession(authOptions)) as AuthSession | null;
     if (session && session.accessToken) {
       config.headers.Authorization = `Bearer ${session.accessToken}`;

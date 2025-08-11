@@ -27,15 +27,10 @@ import {
 } from '@mui/icons-material';
 import DataLoader from '@/components/DataLoader';
 import {
-  useRoles,
-  useCreateRole,
-  useUpdateRole,
-  useDeleteRole,
-  useRoleResources,
-  useAddRoleResource,
-  useRemoveRoleResource,
-  useMenuResources,
-} from '@/services/adminService';
+  useRoleService,
+  useResourceService,
+  useRoleResourceService,
+} from '@/services/admin';
 
 // 타입 정의 추가
 interface Role {
@@ -52,6 +47,7 @@ function RoleResourceList({
   roleId: number;
   onRemove: (resourceId: number) => void;
 }) {
+  const { useRoleResources } = useRoleResourceService();
   const {
     data: roleResources,
     isLoading,
@@ -98,11 +94,14 @@ function AvailableResourceList({
   onAdd: (resourceId: number) => void;
 }) {
   const {
-    data: menuResources,
-    isLoading: menuLoading,
-    isFetching: menuFetching,
-    isEnabled: menuEnabled,
-  } = useMenuResources();
+    menuResources: {
+      data: menuResources,
+      isLoading: menuLoading,
+      isFetching: menuFetching,
+      isEnabled: menuEnabled,
+    },
+  } = useResourceService();
+  const { useRoleResources } = useRoleResourceService();
   const {
     data: roleResources,
     isLoading: roleLoading,
@@ -156,13 +155,14 @@ function AvailableResourceList({
 }
 
 export default function RolesPage() {
-  const { data: roles, isLoading, isFetching, isEnabled } = useRoles();
-  const { data: menuResources } = useMenuResources();
-  const createRole = useCreateRole();
-  const updateRole = useUpdateRole();
-  const deleteRole = useDeleteRole();
-  const addRoleResource = useAddRoleResource();
-  const removeRoleResource = useRemoveRoleResource();
+  const {
+    roles: { data: roles, isLoading, isFetching, isEnabled },
+  } = useRoleService();
+  const {
+    menuResources: { data: menuResources },
+  } = useResourceService();
+  const { createRole, updateRole, deleteRole } = useRoleService();
+  const { addRoleResource, removeRoleResource } = useRoleResourceService();
 
   const [openDialog, setOpenDialog] = useState(false);
   const [openResourceDialog, setOpenResourceDialog] = useState(false);

@@ -1,9 +1,7 @@
 'use client';
 import { Box, Typography } from '@mui/material';
-import { Grid } from '@mui/material';
 import { useSession } from 'next-auth/react';
 import { useDialog } from '@/components/providers/DialogProvider';
-import UserList from '../members/UserList';
 import ToastCard from './ToastCard';
 import NotificationCard from './NotificationCard';
 
@@ -12,14 +10,20 @@ export default function MainPage() {
     <>
       <Box sx={{ maxWidth: 1200, mx: 'auto', mt: 6, p: 3 }}>
         {/* 알림/액션/토스트 카드 */}
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            gap: 2,
+          }}
+        >
+          <Box>
             <NotificationCard />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6 }}>
+          </Box>
+          <Box>
             <ToastCard />
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       </Box>
     </>
   );
