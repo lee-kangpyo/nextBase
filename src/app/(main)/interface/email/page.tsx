@@ -26,14 +26,12 @@ import {
 import { toast } from 'react-toastify';
 import DropZone from '@/components/DropZone/DropZone';
 import EmailField from '@/components/EmailField/EmailField';
-import {
-  useEmailSendMutation,
-  useTempFileUploadMutation,
-} from '@/services/emailService';
-import { Attachment } from '@/services/emailService';
+import { useEmailService } from '@/services/email';
+import type { Attachment } from '@/services/email';
 import { EmailData } from '@/types/email';
 
 export default function EmailSendPage() {
+  const { useEmailSendMutation, useTempFileUploadMutation } = useEmailService();
   const sendEmailMutation = useEmailSendMutation();
   const tempFileUploadMutation = useTempFileUploadMutation();
 

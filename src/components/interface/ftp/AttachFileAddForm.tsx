@@ -10,7 +10,7 @@ import {
   Alert,
 } from '@mui/material';
 import DropZone from '@/components/DropZone/DropZone';
-import { useAttachFileAddMutation } from '@/services/interService';
+import { useInterService } from '@/services/inter';
 import { useRouter } from 'next/navigation';
 import { useFtpStore } from '@/stores/ftpStore';
 
@@ -26,6 +26,7 @@ export default function AttachFileAddForm({
   const router = useRouter();
   const { setSelectedAttachId } = useFtpStore();
 
+  const { useAttachFileAddMutation } = useInterService();
   const {
     mutate: addFiles,
     isPending,

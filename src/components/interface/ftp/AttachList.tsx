@@ -14,7 +14,7 @@ import {
   Alert,
   Box,
 } from '@mui/material';
-import { useAttachList } from '@/services/interService';
+import { useInterService } from '@/services/inter';
 import dayjs from 'dayjs';
 import AttachFileList from './AttachFileList';
 import { useFtpStore } from '@/stores/ftpStore';
@@ -38,6 +38,7 @@ export default function AttachList() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const { selectedAttachId, setSelectedAttachId } = useFtpStore();
 
+  const { useAttachList } = useInterService();
   const {
     data: attachList,
     isLoading,

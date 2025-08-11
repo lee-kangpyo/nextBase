@@ -9,7 +9,7 @@ import {
   CircularProgress,
   Button,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { verifyResetToken, resetPassword } from './actions';
 import React from 'react';
@@ -19,7 +19,7 @@ import ResetPasswordForm from './component/ResetPasswordForm';
 import TokenVerifyingLoader from './component/TokenVerifyingLoader';
 import Container from './component/ResetPasswordContainer';
 
-export default function ResetPasswordPage() {
+function ResetPasswordPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
@@ -114,5 +114,13 @@ export default function ResetPasswordPage() {
         </Button>
       )}
     </Container>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div>로딩 중...</div>}>
+      <ResetPasswordPageContent />
+    </Suspense>
   );
 }

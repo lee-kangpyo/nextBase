@@ -11,13 +11,14 @@ import {
   Alert,
 } from '@mui/material';
 import DropZone from '@/components/DropZone/DropZone';
-import { useFtpUploadMutation } from '@/services/interService';
+import { useInterService } from '@/services/inter';
 
 export default function AttachUploadForm() {
   const [file, setFile] = useState<File[]>([]);
   const [attachName, setAttachName] = useState('');
   const [result, setResult] = useState<string | null>(null);
 
+  const { useFtpUploadMutation } = useInterService();
   const {
     mutate: fileUpload,
     isPending,

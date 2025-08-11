@@ -14,11 +14,7 @@ import {
   Box,
 } from '@mui/material';
 import dayjs from 'dayjs';
-import {
-  downloadBundle,
-  useAttachFiles,
-  downloadFile,
-} from '@/services/interService';
+import { useInterService } from '@/services/inter';
 import { useApi } from '@/hooks/useApi';
 import { useRouter } from 'next/navigation';
 
@@ -29,6 +25,7 @@ interface AttachFileListProps {
 export default function AttachFileList({ attachId }: AttachFileListProps) {
   const api = useApi();
   const router = useRouter();
+  const { useAttachFiles, downloadFile, downloadBundle } = useInterService();
   const { data, isLoading, error } = useAttachFiles(attachId);
 
   const handleDownload = (fileId: number) => {
