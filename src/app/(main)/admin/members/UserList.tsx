@@ -22,6 +22,7 @@ import {
   InputLabel,
   Select,
 } from '@mui/material';
+import DataLoader from '@/components/DataLoader';
 import {
   MoreVert as MoreVertIcon,
   Add as AddIcon,
@@ -40,7 +41,7 @@ import {
 } from '@/services/adminService';
 
 export default function UserList() {
-  const { data, isLoading, isEnabled, error } = useAdminUserList();
+  const { data, isLoading, isFetching, isEnabled, error } = useAdminUserList();
   const { data: roles } = useRoles();
   const addUserRole = useAddUserRole();
   const removeUserRole = useRemoveUserRole();
@@ -147,9 +148,7 @@ export default function UserList() {
     }
   };
 
-  // 조건부 랜더링
-  if (isLoading || !isEnabled) return <CircularProgress />;
-
+  // 에러 처리
   if (error) {
     const axiosError = error as AxiosError;
     const status = axiosError.response?.status;
@@ -164,91 +163,107 @@ export default function UserList() {
 
     return <Alert severity="error">에러: {message}</Alert>;
   }
-  if (!data || data.length === 0)
-    return <Typography>유저가 없습니다.</Typography>;
 
   return (
-    <>
-      <List>
-        {data.map((user: any) => (
-          <ListItem key={user.userName} alignItems="flex-start">
-            <ListItemText
-              primary={
-                <Box>
-                  {/* 사용자 이름과 상태 */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      mb: 1,
-                    }}
-                  >
-                    <Typography fontWeight="bold" variant="h6">
-                      {user.userName}
-                    </Typography>
-                    <Chip
-                      label={user.useYn === 'Y' ? '활성' : '비활성'}
-                      color={user.useYn === 'Y' ? 'success' : 'default'}
-                      size="small"
-                    />
-                  </Box>
-
-                  {/* 상세 정보 - 한 줄로 표시 */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: 2,
-                    }}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      이메일: {user.email}
-                    </Typography>
-
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body2" color="text.secondary">
-                        권한:
+    <DataLoader
+      data={data}
+      isLoading={isLoading}
+      isFetching={isFetching}
+      isEnabled={isEnabled}
+      loadingMessage="회원 목록을 불러오는 중..."
+      showBackgroundSpinner={true}
+    >
+      {!data || data.length === 0 ? (
+        <Typography>유저가 없습니다.</Typography>
+      ) : (
+        <List>
+          {data.map((user: any) => (
+            <ListItem key={user.userName} alignItems="flex-start">
+              <ListItemText
+                primary={
+                  <Box>
+                    {/* 사용자 이름과 상태 */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 2,
+                        mb: 1,
+                      }}
+                    >
+                      <Typography fontWeight="bold" variant="h6">
+                        {user.userName}
                       </Typography>
-                      {user.roles && user.roles.length > 0 ? (
-                        user.roles.map((role: any) => (
-                          <Chip
-                            key={typeof role === 'string' ? role : role.roleId}
-                            label={
-                              typeof role === 'string' ? role : role.roleName
-                            }
-                            color="primary"
-                            size="small"
-                          />
-                        ))
-                      ) : (
-                        <Typography variant="body2" color="text.secondary">
-                          없음
-                        </Typography>
-                      )}
+                      <Chip
+                        label={user.useYn === 'Y' ? '활성' : '비활성'}
+                        color={user.useYn === 'Y' ? 'success' : 'default'}
+                        size="small"
+                      />
                     </Box>
 
-                    <Typography variant="body2" color="text.secondary">
-                      로그인 실패: {user.loginFailureCount}회
-                    </Typography>
+                    {/* 상세 정보 - 한 줄로 표시 */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: 2,
+                      }}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        이메일: {user.email}
+                      </Typography>
 
-                    <Typography variant="body2" color="text.secondary">
-                      마지막 실패:{' '}
-                      {user.lastFailureTimestamp
-                        ? new Date(user.lastFailureTimestamp).toLocaleString()
-                        : '-'}
-                    </Typography>
+                      <Box
+                        sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+                      >
+                        <Typography variant="body2" color="text.secondary">
+                          권한:
+                        </Typography>
+                        {user.roles && user.roles.length > 0 ? (
+                          user.roles.map((role: any) => (
+                            <Chip
+                              key={
+                                typeof role === 'string' ? role : role.roleId
+                              }
+                              label={
+                                typeof role === 'string' ? role : role.roleName
+                              }
+                              color="primary"
+                              size="small"
+                            />
+                          ))
+                        ) : (
+                          <Typography variant="body2" color="text.secondary">
+                            없음
+                          </Typography>
+                        )}
+                      </Box>
+
+                      <Typography variant="body2" color="text.secondary">
+                        로그인 실패: {user.loginFailureCount}회
+                      </Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        마지막 실패:{' '}
+                        {user.lastFailureTimestamp
+                          ? new Date(user.lastFailureTimestamp).toLocaleString()
+                          : '-'}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              }
-            />
-            <IconButton onClick={(e) => handleMenuClick(e, user)} size="small">
-              <MoreVertIcon />
-            </IconButton>
-          </ListItem>
-        ))}
-      </List>
+                }
+              />
+              <IconButton
+                onClick={(e) => handleMenuClick(e, user)}
+                size="small"
+              >
+                <MoreVertIcon />
+              </IconButton>
+            </ListItem>
+          ))}
+        </List>
+      )}
 
       {/* 권한 관리 메뉴 */}
       <Menu
@@ -399,6 +414,6 @@ export default function UserList() {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </DataLoader>
   );
 }

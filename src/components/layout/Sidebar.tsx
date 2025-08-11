@@ -20,6 +20,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import EmailIcon from '@mui/icons-material/Email';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import SecurityIcon from '@mui/icons-material/Security';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
@@ -75,6 +76,11 @@ const menuItems = [
     children: [
       { label: '회원관리', path: '/admin/members', icon: <PersonIcon /> },
       { label: '권한관리', path: '/admin/roles', icon: <SecurityIcon /> },
+      {
+        label: '메뉴관리',
+        path: '/admin/menu-resources',
+        icon: <ListAltIcon />,
+      },
     ],
   },
 ];
