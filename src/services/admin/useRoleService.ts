@@ -7,14 +7,15 @@ export const useRoleService = () => {
   const queryClient = useQueryClient();
 
   // 권한 목록 조회
-  const roles = useQuery({
-    queryKey: ['roles'],
-    enabled: api.status === 'authenticated',
-    queryFn: async () => {
-      const res = await api.get('/admin/roles');
-      return res.data;
-    },
-  });
+  const roles = () =>
+    useQuery({
+      queryKey: ['roles'],
+      enabled: api.status === 'authenticated',
+      queryFn: async () => {
+        const res = await api.get('/admin/roles');
+        return res.data;
+      },
+    });
 
   // 권한 생성
   const createRole = useMutation({

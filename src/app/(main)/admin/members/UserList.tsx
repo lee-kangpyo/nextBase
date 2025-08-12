@@ -31,14 +31,11 @@ import {
 import { useState } from 'react';
 import type { AxiosError } from 'axios';
 import { useUserService, useRoleService } from '@/services/admin';
+import { getUserIdentifier } from '@/utils/identifier';
 
 export default function UserList() {
-  const {
-    adminUserList: { data, isLoading, isFetching, isEnabled, error },
-  } = useUserService();
-  const {
-    roles: { data: roles },
-  } = useRoleService();
+  const { adminUserList } = useUserService();
+  const { roles: roleList } = useRoleService();
   const {
     addUserRole,
     removeUserRole,
@@ -46,6 +43,11 @@ export default function UserList() {
     deactivateUser,
     resetLoginFailure,
   } = useUserService();
+
+  // 함수 호출 후 구조분해
+  const { data, isLoading, isFetching, isEnabled, error } = adminUserList();
+
+  const { data: roles } = roleList();
 
   // 권한 관리 상태
   const [selectedUser, setSelectedUser] = useState<any>(null);
@@ -78,7 +80,7 @@ export default function UserList() {
 
     try {
       await addUserRole.mutateAsync({
-        userName: selectedUser.userName,
+        userName: getUserIdentifier(selectedUser),
         roleId: selectedRoleId,
       });
 
@@ -108,7 +110,7 @@ export default function UserList() {
         }
 
         await removeUserRole.mutateAsync({
-          userName: selectedUser.userName,
+          userName: getUserIdentifier(selectedUser),
           roleId,
         });
 
@@ -176,7 +178,7 @@ export default function UserList() {
       ) : (
         <List>
           {data.map((user: any) => (
-            <ListItem key={user.userName} alignItems="flex-start">
+            <ListItem key={getUserIdentifier(user)} alignItems="flex-start">
               <ListItemText
                 primary={
                   <Box>
@@ -190,7 +192,7 @@ export default function UserList() {
                       }}
                     >
                       <Typography fontWeight="bold" variant="h6">
-                        {user.userName}
+                        {getUserIdentifier(user)}
                       </Typography>
                       <Chip
                         label={user.useYn === 'Y' ? '활성' : '비활성'}
@@ -293,9 +295,9 @@ export default function UserList() {
           onClick={() => {
             if (selectedUser) {
               if (selectedUser.useYn === 'Y') {
-                handleDeactivateUser(selectedUser.userName);
+                handleDeactivateUser(getUserIdentifier(selectedUser));
               } else {
-                handleActivateUser(selectedUser.userName);
+                handleActivateUser(getUserIdentifier(selectedUser));
               }
             }
             handleMenuClose();
@@ -307,7 +309,7 @@ export default function UserList() {
           <MenuItem
             onClick={() => {
               if (selectedUser) {
-                handleResetLoginFailure(selectedUser.userName);
+                handleResetLoginFailure(getUserIdentifier(selectedUser));
               }
               handleMenuClose();
             }}

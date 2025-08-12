@@ -13,10 +13,11 @@ import {
 } from '@mui/material';
 import { signOut, useSession } from 'next-auth/react';
 import { logout } from '@/actions/auth';
+import { getSessionIdentifier } from '@/utils/identifier';
 
 export default function Header() {
   const { data: session, status } = useSession();
-  const userName = session?.user?.userName;
+  const userName = getSessionIdentifier(session);
   const roles = session?.user?.roles || [];
 
   const logoutHandler = async () => {

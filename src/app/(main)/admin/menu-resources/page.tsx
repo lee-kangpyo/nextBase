@@ -37,11 +37,19 @@ import IconSelector from '@/components/IconSelector/IconSelector';
 
 export default function MenuResourcesPage() {
   const {
-    menuResources: { data: menuResources, isLoading, isFetching, isEnabled },
+    menuResources,
     createMenuResource,
     updateMenuResource,
     deleteMenuResource,
   } = useResourceService();
+
+  // 함수 호출 후 구조분해
+  const {
+    data: menuResourcesData,
+    isLoading,
+    isFetching,
+    isEnabled,
+  } = menuResources();
 
   const [openDialog, setOpenDialog] = useState(false);
   const [editingResource, setEditingResource] = useState<MenuResource | null>(
@@ -120,7 +128,7 @@ export default function MenuResourcesPage() {
 
   return (
     <DataLoader
-      data={menuResources}
+      data={menuResourcesData}
       isLoading={isLoading}
       isFetching={isFetching}
       isEnabled={isEnabled}
@@ -162,7 +170,7 @@ export default function MenuResourcesPage() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {menuResources?.map((resource) => (
+              {menuResourcesData?.map((resource) => (
                 <TableRow key={resource.resourceId}>
                   <TableCell>{resource.resourceId}</TableCell>
                   <TableCell>{resource.menuName}</TableCell>
@@ -295,8 +303,8 @@ export default function MenuResourcesPage() {
                     label="부모 메뉴"
                   >
                     <MenuItem value="">없음</MenuItem>
-                    {menuResources
-                      ?.filter((r) => r.isGroup)
+                    {menuResourcesData
+                      ?.filter((r: MenuResource) => r.isGroup)
                       .map((resource) => (
                         <MenuItem
                           key={resource.resourceId}

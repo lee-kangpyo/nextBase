@@ -93,14 +93,13 @@ function AvailableResourceList({
   roleId: number;
   onAdd: (resourceId: number) => void;
 }) {
+  const { menuResources } = useResourceService();
   const {
-    menuResources: {
-      data: menuResources,
-      isLoading: menuLoading,
-      isFetching: menuFetching,
-      isEnabled: menuEnabled,
-    },
-  } = useResourceService();
+    data: menuResourcesData,
+    isLoading: menuLoading,
+    isFetching: menuFetching,
+    isEnabled: menuEnabled,
+  } = menuResources();
   const { useRoleResources } = useRoleResourceService();
   const {
     data: roleResources,
@@ -125,7 +124,7 @@ function AvailableResourceList({
   const assignedResourceIds = roleResources?.map((r) => r.resourceId) || [];
 
   // 할당되지 않은 리소스들 (그룹 제외, 일반 메뉴만)
-  const availableResources = menuResources.filter(
+  const availableResources = (menuResourcesData || []).filter(
     (resource) =>
       !assignedResourceIds.includes(resource.resourceId) && !resource.isGroup, // 그룹 제외
   );
@@ -155,12 +154,12 @@ function AvailableResourceList({
 }
 
 export default function RolesPage() {
-  const {
-    roles: { data: roles, isLoading, isFetching, isEnabled },
-  } = useRoleService();
-  const {
-    menuResources: { data: menuResources },
-  } = useResourceService();
+  const { roles: roleList } = useRoleService();
+
+  // 함수 호출 후 구조분해
+  const { data: roles, isLoading, isFetching, isEnabled } = roleList();
+  const { menuResources } = useResourceService();
+  const { data: menuResourcesData } = menuResources();
   const { createRole, updateRole, deleteRole } = useRoleService();
   const { addRoleResource, removeRoleResource } = useRoleResourceService();
 

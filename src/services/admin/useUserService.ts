@@ -7,14 +7,15 @@ export const useUserService = () => {
   const queryClient = useQueryClient();
 
   // 관리자 사용자 목록 조회
-  const adminUserList = useQuery({
-    queryKey: ['admin-user-list'],
-    enabled: api.status === 'authenticated',
-    queryFn: async () => {
-      const res = await api.get('/admin/userList');
-      return res.data;
-    },
-  });
+  const adminUserList = () =>
+    useQuery({
+      queryKey: ['admin-user-list'],
+      enabled: api.status === 'authenticated',
+      queryFn: async () => {
+        const res = await api.get('/admin/userList');
+        return res.data;
+      },
+    });
 
   // 사용자에게 권한 추가
   const addUserRole = useMutation({
