@@ -206,7 +206,7 @@ export const useRoleService = () => {
   return {
     // Queries
     roles: () => roles,
-    useRoleResources,
+    useRoleResources: () => useRoleResources,
 
     // Mutations
     createRole,

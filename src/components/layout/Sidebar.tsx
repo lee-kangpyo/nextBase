@@ -20,6 +20,8 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import NextLink from 'next/link'; // Next.js Link 추가
 import { getIconComponent, STATIC_ICONS } from '@/utils/iconHelper';
 import { useUserMenuService } from '@/services/menu';
+import { useSidebarStore } from '@/stores/sidebarStore';
+import SidebarSkeleton from './SidebarSkeleton';
 
 const drawerWidth = 220;
 const miniWidth = 56;
@@ -83,10 +85,11 @@ const staticMenuItems = [
 ];
 
 export default function MiniSidebar() {
-  const [open, setOpen] = React.useState(false);
-  const [expandedMenus, setExpandedMenus] = React.useState<Set<string>>(
-    new Set(),
-  );
+  const { isOpen, expandedMenus, toggleSidebar, toggleMenuGroup } =
+    useSidebarStore();
+
+  // expandedMenus를 Set으로 변환 (기존 코드 호환성)
+  const expandedMenusSet = new Set(expandedMenus);
 
   // 동적 메뉴 데이터 가져오기
   const { userMenu } = useUserMenuService();
@@ -115,51 +118,53 @@ export default function MiniSidebar() {
   }, [menuItems]);
 
   const handleMenuClick = (item: any) => {
+    console.log('🔍 handleMenuClick 호출:', item);
     if (item.children) {
-      setExpandedMenus((prev) => {
-        const newSet = new Set(prev);
-        if (newSet.has(item.path)) {
-          newSet.delete(item.path);
-        } else {
-          newSet.add(item.path);
-        }
-        return newSet;
-      });
+      // path가 null이면 key를 사용
+      const menuPath = item.path || item.key;
+      console.log('✅ toggleMenuGroup 호출:', menuPath);
+      toggleMenuGroup(menuPath);
+    } else {
+      console.log('❌ children이 없음');
     }
   };
 
   const renderMenuItem = (item: any, level: number = 0, index: number = 0) => {
-    const isExpanded = expandedMenus.has(item.path);
+    // path가 null이면 key를 사용
+    const menuPath = item.path || item.key;
+    const isExpanded = expandedMenusSet.has(menuPath);
     const hasChildren = item.children && item.children.length > 0;
 
     const menuButton = (
       <ListItemButton
         sx={{
           minHeight: 48,
-          justifyContent: open ? 'initial' : 'center',
+          justifyContent: isOpen ? 'initial' : 'center',
           px: 2.5,
-          pl: open ? 2.5 + level * 2 : 2.5,
+          pl: isOpen ? 2.5 + level * 2 : 2.5,
         }}
         component={hasChildren ? 'div' : NextLink} // NextLink 사용
-        href={hasChildren ? undefined : item.path}
+        href={hasChildren ? undefined : menuPath}
         onClick={hasChildren ? () => handleMenuClick(item) : undefined}
       >
         <ListItemIcon
           sx={{
             minWidth: 0,
-            mr: open ? 2 : 'auto',
+            mr: isOpen ? 2 : 'auto',
             justifyContent: 'center',
           }}
         >
           {item.icon}
         </ListItemIcon>
-        <ListItemText primary={item.label} sx={{ opacity: open ? 1 : 0 }} />
-        {hasChildren && open && (isExpanded ? <ExpandLess /> : <ExpandMore />)}
+        <ListItemText primary={item.label} sx={{ opacity: isOpen ? 1 : 0 }} />
+        {hasChildren &&
+          isOpen &&
+          (isExpanded ? <ExpandLess /> : <ExpandMore />)}
       </ListItemButton>
     );
 
     return (
-      <React.Fragment key={item.path || `menu-${item.label}-${index}`}>
+      <React.Fragment key={menuPath}>
         <ListItem
           disablePadding
           sx={{
@@ -167,7 +172,7 @@ export default function MiniSidebar() {
             position: 'relative',
           }}
         >
-          {open ? (
+          {isOpen ? (
             menuButton
           ) : (
             <Box
@@ -242,7 +247,7 @@ export default function MiniSidebar() {
           )}
         </ListItem>
         {hasChildren && (
-          <Collapse in={isExpanded && open} timeout="auto" unmountOnExit>
+          <Collapse in={isExpanded && isOpen} timeout="auto" unmountOnExit>
             <List component="div" disablePadding>
               {item.children.map((child: any) =>
                 renderMenuItem(child, level + 1),
@@ -257,13 +262,13 @@ export default function MiniSidebar() {
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
-      <Drawer variant="permanent" open={open}>
+      <Drawer variant="permanent" open={isOpen}>
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
             height: 64,
-            width: open ? drawerWidth : miniWidth,
+            width: isOpen ? drawerWidth : miniWidth,
             bgcolor: 'background.paper',
             transition: (theme) =>
               theme.transitions.create('width', {
@@ -271,11 +276,11 @@ export default function MiniSidebar() {
                 duration: theme.transitions.duration.standard,
               }),
             px: 1.5,
-            justifyContent: open ? 'flex-end' : 'center',
+            justifyContent: isOpen ? 'flex-end' : 'center',
           }}
         >
-          <IconButton onClick={() => setOpen(!open)} size="large">
-            {open ? (
+          <IconButton onClick={toggleSidebar} size="large">
+            {isOpen ? (
               <ChevronLeftIcon fontSize="large" />
             ) : (
               <MenuIcon fontSize="large" />
@@ -283,12 +288,14 @@ export default function MiniSidebar() {
           </IconButton>
         </Box>
         <List>
-          {/* 동적 메뉴만 표시 (로딩 중이거나 데이터가 없어도 정적 메뉴 표시 안함) */}
-          {dynamicMenuItems && dynamicMenuItems.length > 0
-            ? dynamicMenuItems.map((item: any, index: number) =>
-                renderMenuItem(item, 0, index),
-              )
-            : null}
+          {isLoading ? (
+            <SidebarSkeleton isOpen={isOpen} />
+          ) : /* 동적 메뉴 표시 */
+          dynamicMenuItems && dynamicMenuItems.length > 0 ? (
+            dynamicMenuItems.map((item: any, index: number) =>
+              renderMenuItem(item, 0, index),
+            )
+          ) : null}
         </List>
       </Drawer>
     </Box>
