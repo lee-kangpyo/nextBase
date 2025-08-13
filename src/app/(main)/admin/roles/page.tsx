@@ -26,11 +26,7 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 import DataLoader from '@/components/DataLoader';
-import {
-  useRoleService,
-  useResourceService,
-  useRoleResourceService,
-} from '@/services/admin';
+import { useRoleService, useMenuResourceService } from '@/services/admin';
 
 // 타입 정의 추가
 interface Role {
@@ -47,7 +43,7 @@ function RoleResourceList({
   roleId: number;
   onRemove: (resourceId: number) => void;
 }) {
-  const { useRoleResources } = useRoleResourceService();
+  const { useRoleResources } = useRoleService();
   const {
     data: roleResources,
     isLoading,
@@ -93,14 +89,16 @@ function AvailableResourceList({
   roleId: number;
   onAdd: (resourceId: number) => void;
 }) {
-  const { menuResources } = useResourceService();
+  const { menuResources } = useMenuResourceService();
+  const { useRoleResources } = useRoleService();
+
   const {
     data: menuResourcesData,
     isLoading: menuLoading,
     isFetching: menuFetching,
     isEnabled: menuEnabled,
   } = menuResources();
-  const { useRoleResources } = useRoleResourceService();
+
   const {
     data: roleResources,
     isLoading: roleLoading,
@@ -154,14 +152,19 @@ function AvailableResourceList({
 }
 
 export default function RolesPage() {
-  const { roles: roleList } = useRoleService();
+  const {
+    roles: roleList,
+    createRole,
+    updateRole,
+    deleteRole,
+    addRoleResource,
+    removeRoleResource,
+  } = useRoleService();
 
   // 함수 호출 후 구조분해
   const { data: roles, isLoading, isFetching, isEnabled } = roleList();
-  const { menuResources } = useResourceService();
+  const { menuResources } = useMenuResourceService();
   const { data: menuResourcesData } = menuResources();
-  const { createRole, updateRole, deleteRole } = useRoleService();
-  const { addRoleResource, removeRoleResource } = useRoleResourceService();
 
   const [openDialog, setOpenDialog] = useState(false);
   const [openResourceDialog, setOpenResourceDialog] = useState(false);

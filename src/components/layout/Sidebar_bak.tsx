@@ -14,12 +14,16 @@ import ListItemText from '@mui/material/ListItemText';
 import Collapse from '@mui/material/Collapse';
 import Tooltip from '@mui/material/Tooltip';
 import MenuIcon from '@mui/icons-material/Menu';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import PersonIcon from '@mui/icons-material/Person';
+import EmailIcon from '@mui/icons-material/Email';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import SecurityIcon from '@mui/icons-material/Security';
+import ListAltIcon from '@mui/icons-material/ListAlt';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import NextLink from 'next/link'; // Next.js Link 추가
-import { getIconComponent, STATIC_ICONS } from '@/utils/iconHelper';
-import { useUserMenuService } from '@/services/menu';
 
 const drawerWidth = 220;
 const miniWidth = 56;
@@ -61,22 +65,21 @@ const Drawer = styled(MuiDrawer, {
   }),
 }));
 
-// 정적 메뉴 아이템 (기본 구조)
-const staticMenuItems = [
-  { label: '대시보드', path: '/main', icon: STATIC_ICONS.Dashboard },
-  { label: 'FTP 전송', path: '/interface/ftp', icon: STATIC_ICONS.CloudUpload },
-  { label: '이메일 전송', path: '/interface/email', icon: STATIC_ICONS.Email },
+const menuItems = [
+  { label: '대시보드', path: '/main', icon: <DashboardIcon /> },
+  { label: 'FTP 전송', path: '/interface/ftp', icon: <CloudUploadIcon /> },
+  { label: '이메일 전송', path: '/interface/email', icon: <EmailIcon /> },
   {
     label: '관리자',
     path: '/admin',
-    icon: STATIC_ICONS.AdminPanelSettings,
+    icon: <AdminPanelSettingsIcon />,
     children: [
-      { label: '회원관리', path: '/admin/members', icon: STATIC_ICONS.Person },
-      { label: '권한관리', path: '/admin/roles', icon: STATIC_ICONS.Security },
+      { label: '회원관리', path: '/admin/members', icon: <PersonIcon /> },
+      { label: '권한관리', path: '/admin/roles', icon: <SecurityIcon /> },
       {
         label: '메뉴관리',
         path: '/admin/menu-resources',
-        icon: STATIC_ICONS.ListAlt,
+        icon: <ListAltIcon />,
       },
     ],
   },
@@ -87,32 +90,6 @@ export default function MiniSidebar() {
   const [expandedMenus, setExpandedMenus] = React.useState<Set<string>>(
     new Set(),
   );
-
-  // 동적 메뉴 데이터 가져오기
-  const { userMenu } = useUserMenuService();
-  const { data: menuItems, isLoading, error } = userMenu;
-
-  // 동적 메뉴를 사이드바 형식으로 변환
-  const dynamicMenuItems = React.useMemo(() => {
-    if (!menuItems || menuItems.length === 0) return [];
-
-    return menuItems.map((item: any, index: number) => ({
-      label: item.menuName,
-      path: item.menuUrl,
-      icon: getIconComponent(item.iconName),
-      children:
-        item.children && item.children.length > 0
-          ? item.children.map((child: any, childIndex: number) => ({
-              label: child.menuName,
-              path: child.menuUrl,
-              icon: getIconComponent(child.iconName),
-              children: undefined,
-              key: child.menuUrl || `child-${child.menuName}-${childIndex}`, // 고유 key 추가
-            }))
-          : undefined,
-      key: item.menuUrl || `menu-${item.menuName}-${index}`, // 고유 key 추가
-    }));
-  }, [menuItems]);
 
   const handleMenuClick = (item: any) => {
     if (item.children) {
@@ -140,8 +117,8 @@ export default function MiniSidebar() {
           px: 2.5,
           pl: open ? 2.5 + level * 2 : 2.5,
         }}
-        component={hasChildren ? 'div' : NextLink} // NextLink 사용
         href={hasChildren ? undefined : item.path}
+        component={hasChildren ? 'div' : 'a'}
         onClick={hasChildren ? () => handleMenuClick(item) : undefined}
       >
         <ListItemIcon
@@ -159,7 +136,7 @@ export default function MiniSidebar() {
     );
 
     return (
-      <React.Fragment key={item.path || `menu-${item.label}-${index}`}>
+      <React.Fragment key={item.path}>
         <ListItem
           disablePadding
           sx={{
@@ -218,8 +195,8 @@ export default function MiniSidebar() {
                     {item.children.map((child: any) => (
                       <ListItem key={child.path} disablePadding>
                         <ListItemButton
-                          component={NextLink} // NextLink 사용
                           href={child.path}
+                          component="a"
                           sx={{
                             minHeight: 40,
                             px: 2,
@@ -283,12 +260,7 @@ export default function MiniSidebar() {
           </IconButton>
         </Box>
         <List>
-          {/* 동적 메뉴만 표시 (로딩 중이거나 데이터가 없어도 정적 메뉴 표시 안함) */}
-          {dynamicMenuItems && dynamicMenuItems.length > 0
-            ? dynamicMenuItems.map((item: any, index: number) =>
-                renderMenuItem(item, 0, index),
-              )
-            : null}
+          {menuItems.map((item, index) => renderMenuItem(item, 0, index))}
         </List>
       </Drawer>
     </Box>

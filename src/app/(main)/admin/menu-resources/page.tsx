@@ -30,7 +30,7 @@ import {
   Delete as DeleteIcon,
 } from '@mui/icons-material';
 import * as MuiIcons from '@mui/icons-material';
-import { useResourceService } from '@/services/admin';
+import { useMenuResourceService } from '@/services/admin';
 import { MenuResource, MenuResourceRequest } from '@/types/menu';
 import DataLoader from '@/components/DataLoader';
 import IconSelector from '@/components/IconSelector/IconSelector';
@@ -41,7 +41,7 @@ export default function MenuResourcesPage() {
     createMenuResource,
     updateMenuResource,
     deleteMenuResource,
-  } = useResourceService();
+  } = useMenuResourceService();
 
   // 함수 호출 후 구조분해
   const {

@@ -35,3 +35,19 @@ export interface RoleWithResources {
   description: string;
   resources: MenuResource[];
 }
+
+interface MenuItem {
+  id: number;
+  name: string; // 메뉴 이름 (한국어)
+  path: string; // 라우트 경로
+  iconName: string; // 아이콘 이름 (Material-UI)
+  isGroup: boolean; // 그룹 메뉴 여부
+  parentResourceId?: number; // 부모 그룹 ID
+  order: number; // 정렬 순서
+  isActive: boolean; // 활성화 여부
+}
+
+interface UserMenu {
+  menuItems: MenuItem[];
+  userPermissions: string[]; // 사용자 권한 목록
+}

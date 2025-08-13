@@ -11,6 +11,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import QueryProvider from '@/components/providers/QueryProvider';
 import SessionProvider from '@/components/providers/SessionProvider';
 import { DialogProvider } from '@/components/providers/DialogProvider';
+import { ApiProvider } from '@/components/providers/ApiProvider';
 import { ToastContainer } from 'react-toastify';
 const roboto = Roboto({
   weight: ['300', '400', '500', '700'],
@@ -50,8 +51,12 @@ export default function RootLayout({
           >
             <ThemeProvider theme={theme}>
               <QueryProvider>
-                <DialogProvider>{children}</DialogProvider>
-                <ReactQueryDevtools initialIsOpen={false} />
+                <DialogProvider>
+                  <ApiProvider>
+                    {children}
+                    <ReactQueryDevtools initialIsOpen={false} />
+                  </ApiProvider>
+                </DialogProvider>
               </QueryProvider>
             </ThemeProvider>
           </AppRouterCacheProvider>
