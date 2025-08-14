@@ -8,6 +8,7 @@ import {
   extractFilenameFromDisposition,
   triggerBlobDownload,
 } from '@/utils/fileDownloadHelper';
+import { ATTACH_API } from '@/constants/api';
 
 // 타입 정의
 export interface AttachFileResponse {
@@ -52,7 +53,7 @@ export function useInterService() {
   // FTP 파일 업로드
   const useFtpUploadMutation = () => {
     const uploadFiles = ({ files, data }: UploadFilesProps) => {
-      return api.upload('/attach/upload', files, data);
+      return api.upload(ATTACH_API.UPLOAD, files, data);
     };
 
     return useMutation({
@@ -73,7 +74,7 @@ export function useInterService() {
   // 첨부 파일 추가
   const useAttachFileAddMutation = (attachId: number) => {
     const addFiles = (files: File[]) => {
-      return api.upload(`/attach/${attachId}/files`, files);
+      return api.upload(ATTACH_API.ADD_FILES(attachId), files);
     };
 
     return useMutation({
@@ -96,7 +97,7 @@ export function useInterService() {
     const param = { page, size };
 
     const getFiles = async ({ page, size }: { page: number; size: number }) => {
-      const res = await api.get('/attach/all-attaches', { page, size });
+      const res = await api.get(ATTACH_API.GET_ALL_ATTACHS, { page, size });
       return res.data;
     };
 
@@ -114,7 +115,7 @@ export function useInterService() {
     const getFiles = async (
       attachId: number,
     ): Promise<AttachFileResponse[]> => {
-      const res = await api.get(`/attach/${attachId}/files`);
+      const res = await api.get(ATTACH_API.GET_FILES(attachId));
       return res.data;
     };
 
@@ -132,7 +133,7 @@ export function useInterService() {
     api: ReturnType<typeof useApi>,
     fileId: number,
   ) => {
-    const res = await api.download(`/attach/download/${fileId}`);
+    const res = await api.download(ATTACH_API.DOWNLOAD(fileId));
     const filename = extractFilenameFromDisposition(
       res.headers['content-disposition'],
     );
@@ -144,7 +145,7 @@ export function useInterService() {
     api: ReturnType<typeof useApi>,
     attachId: number,
   ) => {
-    const res = await api.download(`/attach/${attachId}/download-bundle`);
+    const res = await api.download(ATTACH_API.DOWNLOAD_BUNDLE(attachId));
     const filename = extractFilenameFromDisposition(
       res.headers['content-disposition'],
     );

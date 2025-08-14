@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiContext } from '@/components/providers/ApiProvider';
+import { MENU_API } from '@/constants/api';
 
 export const useUserMenuService = () => {
   const api = useApiContext();
@@ -10,7 +11,7 @@ export const useUserMenuService = () => {
     queryKey: ['user-menu'],
     enabled: api.status === 'authenticated',
     queryFn: async () => {
-      const res = await api.get('/menu');
+      const res = await api.get(MENU_API.LIST);
       return res.data || [];
     },
     staleTime: 1000 * 60 * 30, // 30분

@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
 import { useApi } from '@/hooks/useApi';
+import { USER_API } from '@/constants/api';
 
 export const useUserService = () => {
   const api = useApi();
@@ -11,7 +12,7 @@ export const useUserService = () => {
     queryKey: ['admin-user-list'],
     enabled: api.status === 'authenticated',
     queryFn: async () => {
-      const res = await api.get('/admin/userList');
+      const res = await api.get(USER_API.LIST);
       return res.data;
     },
   });
@@ -19,7 +20,7 @@ export const useUserService = () => {
   // 사용자에게 권한 추가
   const addUserRole = useMutation({
     mutationFn: ({ userName, roleId }: { userName: string; roleId: number }) =>
-      api.post(`/admin/users/${userName}/roles/${roleId}`),
+      api.post(USER_API.ADD_ROLE(userName, roleId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-list'] });
     },
@@ -28,7 +29,7 @@ export const useUserService = () => {
   // 사용자 권한 제거
   const removeUserRole = useMutation({
     mutationFn: ({ userName, roleId }: { userName: string; roleId: number }) =>
-      api.del(`/admin/users/${userName}/roles/${roleId}`),
+      api.post(USER_API.DELETE_ROLE(userName, roleId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-list'] });
     },
@@ -36,8 +37,7 @@ export const useUserService = () => {
 
   // 사용자 활성화
   const activateUser = useMutation({
-    mutationFn: (userName: string) =>
-      api.put(`/admin/users/${userName}/activate`),
+    mutationFn: (userName: string) => api.post(USER_API.ACTIVATE(userName)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-list'] });
     },
@@ -45,8 +45,7 @@ export const useUserService = () => {
 
   // 사용자 비활성화
   const deactivateUser = useMutation({
-    mutationFn: (userName: string) =>
-      api.put(`/admin/users/${userName}/deactivate`),
+    mutationFn: (userName: string) => api.post(USER_API.DEACTIVATE(userName)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-list'] });
     },
@@ -55,7 +54,7 @@ export const useUserService = () => {
   // 로그인 실패 횟수 초기화
   const resetLoginFailure = useMutation({
     mutationFn: (userName: string) =>
-      api.put(`/admin/users/${userName}/reset-login-failure`),
+      api.post(USER_API.RESET_LOGIN_FAILURE(userName)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-user-list'] });
     },

@@ -3,6 +3,7 @@ import { useApi } from '@/hooks/useApi';
 import { useDialog } from '@/components/providers/DialogProvider';
 import { handleApiError } from '@/utils/handleApiError';
 import { AxiosError } from 'axios';
+import { EMAIL_API, ATTACH_API } from '@/constants/api';
 
 // 백엔드 DTO 인터페이스
 interface TempFileResponse {
@@ -45,7 +46,7 @@ export function useEmailService() {
       const formData = new FormData();
       formData.append('file', file);
 
-      return api.post('/temp-files/upload', formData, {
+      return api.post(EMAIL_API.TEMP_FILE_UPLOAD, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -67,7 +68,7 @@ export function useEmailService() {
   // 이메일 전송 API (JSON 방식)
   const useEmailSendMutation = () => {
     const sendEmail = (emailRequest: EmailRequest) => {
-      return api.post('/email/send', emailRequest, {
+      return api.post(EMAIL_API.SEND, emailRequest, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -91,7 +92,7 @@ export function useEmailService() {
   // 기존 파일 업로드 API (다른 용도로 사용 가능)
   const useFileUploadMutation = () => {
     const uploadFiles = (files: File[]) => {
-      return api.upload('/attach/upload', files, {
+      return api.upload(ATTACH_API.UPLOAD, files, {
         attachName: '이메일 첨부파일',
       });
     };
@@ -140,7 +141,7 @@ export function useEmailService() {
         });
       }
 
-      return api.post('/email/send', formData, {
+      return api.post(EMAIL_API.SEND, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

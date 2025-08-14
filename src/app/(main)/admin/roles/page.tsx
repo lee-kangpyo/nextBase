@@ -44,12 +44,13 @@ function RoleResourceList({
   onRemove: (resourceId: number) => void;
 }) {
   const { useRoleResources } = useRoleService();
+  const roleResourcesQuery = useRoleResources(roleId);
   const {
     data: roleResources,
     isLoading,
     isFetching,
     isEnabled,
-  } = useRoleResources(roleId);
+  } = roleResourcesQuery;
 
   if (isLoading || isFetching || !isEnabled) {
     return <Typography>로딩 중...</Typography>;
@@ -107,7 +108,7 @@ function AvailableResourceList({
   } = useRoleResources(roleId);
 
   if (
-    !menuResources ||
+    !menuResourcesData ||
     menuLoading ||
     menuFetching ||
     roleLoading ||

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useApiContext } from '@/components/providers/ApiProvider';
 import { MenuResource, MenuResourceRequest } from '@/types/menu';
+import { MENU_RESOURCE_API } from '@/constants/api';
 
 export const useMenuResourceService = () => {
   const api = useApiContext();
@@ -11,7 +12,7 @@ export const useMenuResourceService = () => {
     queryKey: ['menu-resources'],
     enabled: api.status === 'authenticated',
     queryFn: async () => {
-      const res = await api.get('/admin/resources/menu');
+      const res = await api.get(MENU_RESOURCE_API.LIST);
       return res.data.filter(
         (resource: MenuResource) => resource.resourceType === 'MENU_ITEM',
       ) as MenuResource[];
@@ -21,7 +22,7 @@ export const useMenuResourceService = () => {
   // 메뉴 리소스 생성
   const createMenuResource = useMutation({
     mutationFn: (data: MenuResourceRequest) =>
-      api.post('/admin/resources/menu', data),
+      api.post(MENU_RESOURCE_API.CREATE, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['menu-resources'] });
     },
@@ -35,7 +36,7 @@ export const useMenuResourceService = () => {
     }: {
       resourceId: number;
       data: MenuResourceRequest;
-    }) => api.put(`/admin/resources/menu/${resourceId}`, data),
+    }) => api.post(MENU_RESOURCE_API.UPDATE(resourceId), data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['menu-resources'] });
     },
@@ -44,7 +45,7 @@ export const useMenuResourceService = () => {
   // 메뉴 리소스 삭제
   const deleteMenuResource = useMutation({
     mutationFn: (resourceId: number) =>
-      api.del(`/admin/resources/menu/${resourceId}`),
+      api.post(MENU_RESOURCE_API.DELETE(resourceId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['menu-resources'] });
     },

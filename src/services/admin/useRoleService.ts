@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
 import { useApi } from '@/hooks/useApi';
 import { MenuResource } from '@/types/menu';
+import { ROLE_API } from '@/constants/api';
 
 export const useRoleService = () => {
   const api = useApi();
@@ -12,7 +13,7 @@ export const useRoleService = () => {
     queryKey: ['roles'],
     enabled: api.status === 'authenticated',
     queryFn: async () => {
-      const res = await api.get('/admin/roles');
+      const res = await api.get(ROLE_API.LIST);
       return res.data;
     },
   });
@@ -20,7 +21,7 @@ export const useRoleService = () => {
   // 권한 생성
   const createRole = useMutation({
     mutationFn: (data: { roleName: string; description: string }) =>
-      api.post('/admin/roles', data),
+      api.post(ROLE_API.CREATE, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
     },
@@ -34,7 +35,7 @@ export const useRoleService = () => {
     }: {
       roleId: number;
       data: { description: string };
-    }) => api.put(`/admin/roles/${roleId}`, data),
+    }) => api.post(ROLE_API.UPDATE(roleId), data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
     },
@@ -42,7 +43,7 @@ export const useRoleService = () => {
 
   // 권한 삭제
   const deleteRole = useMutation({
-    mutationFn: (roleId: number) => api.del(`/admin/roles/${roleId}`),
+    mutationFn: (roleId: number) => api.post(ROLE_API.DELETE(roleId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['roles'] });
     },
@@ -54,7 +55,7 @@ export const useRoleService = () => {
       queryKey: ['role-resources', roleId],
       enabled: api.status === 'authenticated' && roleId > 0,
       queryFn: async () => {
-        const res = await api.get(`/admin/roles/${roleId}/resources`);
+        const res = await api.get(ROLE_API.GET_RESOURCES(roleId));
         return res.data.filter(
           (resource: MenuResource) => resource.resourceType === 'MENU_ITEM',
         ) as MenuResource[];
@@ -131,7 +132,7 @@ export const useRoleService = () => {
 
       // 6. 새로운 리소스들만 할당
       const promises = uniqueResources.map((resId) =>
-        api.post(`/admin/roles/${roleId}/resources/${resId}`),
+        api.post(ROLE_API.ADD_RESOURCE(roleId, resId)),
       );
 
       await Promise.all(promises);
@@ -167,7 +168,7 @@ export const useRoleService = () => {
       if (!resource) throw new Error('리소스를 찾을 수 없습니다.');
 
       // 2. 실제 리소스 삭제
-      await api.del(`/admin/roles/${roleId}/resources/${resourceId}`);
+      await api.post(ROLE_API.DELETE_RESOURCE(roleId, resourceId));
 
       // 3. 상위 그룹 정리 (중요!)
       if (resource.parentResourceId) {
@@ -190,8 +191,8 @@ export const useRoleService = () => {
 
           // 형제가 없으면 상위 그룹도 삭제
           if (!hasAssignedSiblings) {
-            await api.del(
-              `/admin/roles/${roleId}/resources/${resource.parentResourceId}`,
+            await api.post(
+              ROLE_API.DELETE_RESOURCE(roleId, resource.parentResourceId),
             );
           }
         }
@@ -206,7 +207,7 @@ export const useRoleService = () => {
   return {
     // Queries
     roles: () => roles,
-    useRoleResources: () => useRoleResources,
+    useRoleResources: (roleId: number) => useRoleResources(roleId),
 
     // Mutations
     createRole,
