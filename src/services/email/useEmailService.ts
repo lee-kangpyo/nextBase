@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { useApi } from '@/hooks/useApi';
+import { useApiContext } from '@/components/providers/ApiProvider';
 import { useDialog } from '@/components/providers/DialogProvider';
 import { handleApiError } from '@/utils/handleApiError';
 import { AxiosError } from 'axios';
@@ -37,7 +37,7 @@ interface EmailRequest {
  * @returns 이메일 관련 모든 훅과 함수들을 포함한 객체
  */
 export function useEmailService() {
-  const api = useApi();
+  const api = useApiContext();
   const { showAlert } = useDialog();
 
   // 임시 파일 업로드 API

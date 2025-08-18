@@ -1,10 +1,10 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
-import { useApi } from '@/hooks/useApi';
+import { useApiContext } from '@/components/providers/ApiProvider';
 import { USER_API } from '@/constants/api';
 
 export const useUserService = () => {
-  const api = useApi();
+  const api = useApiContext();
   const queryClient = useQueryClient();
 
   // 관리자 사용자 목록 조회

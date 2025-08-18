@@ -1,11 +1,11 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
-import { useApi } from '@/hooks/useApi';
+import { useApiContext } from '@/components/providers/ApiProvider';
 import { MenuResource } from '@/types/menu';
 import { ROLE_API } from '@/constants/api';
 
 export const useRoleService = () => {
-  const api = useApi();
+  const api = useApiContext();
   const queryClient = useQueryClient();
 
   // 권한 목록 조회

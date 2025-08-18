@@ -55,7 +55,7 @@ export function useApi() {
       const result = await update();
       return result?.accessToken || null;
     } catch (error) {
-      console.error('토큰 갱신 실패:', error);
+      console.error('❌ 토큰 갱신 실패:', error);
       return null;
     }
   };
@@ -182,6 +182,7 @@ export function useApi() {
       return await doGet(accessToken, url, params, config);
     } catch (error: any) {
       if (error.response?.status === 401) {
+        console.log('🚨 GET 요청에서 401 에러 발생:', url);
         return await handle401Error((newAccessToken) =>
           doGet(newAccessToken, url, params, config),
         );

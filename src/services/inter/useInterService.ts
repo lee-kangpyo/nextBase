@@ -1,5 +1,5 @@
 import { useDialog } from '@/components/providers/DialogProvider';
-import { useApi } from '@/hooks/useApi';
+import { useApiContext } from '@/components/providers/ApiProvider';
 import { handleApiError } from '@/utils/handleApiError';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useQueryClient } from '@tanstack/react-query';
@@ -9,6 +9,7 @@ import {
   triggerBlobDownload,
 } from '@/utils/fileDownloadHelper';
 import { ATTACH_API } from '@/constants/api';
+import { useApi } from '@/hooks/useApi';
 
 // 타입 정의
 export interface AttachFileResponse {
@@ -46,7 +47,7 @@ interface UploadFilesProps {
  * @returns 인터페이스 관련 모든 훅과 함수들을 포함한 객체
  */
 export function useInterService() {
-  const api = useApi();
+  const api = useApiContext();
   const { showAlert } = useDialog();
   const queryClient = useQueryClient();
 
