@@ -1,77 +1,110 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+/**
+ * 사이드바 상태 인터페이스
+ * - 사이드바의 열림/닫힘, 메뉴 그룹 상태, 활성 메뉴를 관리
+ */
 interface SidebarState {
-  isOpen: boolean;
-  expandedMenus: string[]; // Set 대신 배열 사용 (JSON 직렬화 가능)
-  activeMenu: string | null;
+  isOpen: boolean; // 사이드바가 열려있는지 여부
+  expandedMenus: string[]; // 현재 펼쳐진 메뉴 그룹들의 경로 배열
+  activeMenu: string | null; // 현재 활성화된 메뉴의 경로
 }
 
+/**
+ * 사이드바 액션 인터페이스
+ * - 사이드바 상태를 변경하는 함수들을 정의
+ */
 interface SidebarActions {
-  toggleSidebar: () => void;
-  toggleMenuGroup: (menuPath: string) => void;
-  setActiveMenu: (menuPath: string) => void;
-  resetExpandedMenus: () => void;
-  setSidebarOpen: (open: boolean) => void;
+  toggleSidebar: () => void; // 사이드바 열기/닫기 토글
+  toggleMenuGroup: (menuPath: string) => void; // 특정 메뉴 그룹의 펼침/접힘 상태 토글
+  setActiveMenu: (menuPath: string) => void; // 활성 메뉴 설정
+  resetExpandedMenus: () => void; // 모든 펼쳐진 메뉴 그룹 초기화
+  setSidebarOpen: (open: boolean) => void; // 사이드바 열기/닫기 상태 직접 설정
 }
 
+/**
+ * 사이드바 상태 관리를 위한 Zustand 스토어
+ * - 사이드바 열림/닫힘, 메뉴 그룹 펼침/접힘, 활성 메뉴 상태 관리
+ * - localStorage를 통한 상태 지속성 제공
+ */
 export const useSidebarStore = create<SidebarState & SidebarActions>()(
   persist(
     (set, get) => ({
-      // 초기 상태 (localStorage에서 복원되므로 의미 없음)
-      isOpen: false,
-      expandedMenus: [],
-      activeMenu: null,
+      // ===== 초기 상태 =====
+      isOpen: false, // 사이드바 기본값: 닫힘
+      expandedMenus: [], // 펼쳐진 메뉴 그룹: 없음
+      activeMenu: null, // 활성 메뉴: 없음
 
-      // 액션들
+      // ===== 사이드바 액션들 =====
+
+      // 사이드바 열기/닫기 토글
       toggleSidebar: () => {
         const { isOpen } = get();
         set({ isOpen: !isOpen });
       },
 
+      /**
+       * 사이드바 열기/닫기 상태 직접 설정
+       * @param open - true: 열기, false: 닫기
+       */
       setSidebarOpen: (open: boolean) => {
         set({ isOpen: open });
       },
 
+      /**
+       * 특정 메뉴 그룹의 펼침/접힘 상태 토글
+       * @param menuPath - 메뉴 경로 (예: '/admin', '/interface')
+       */
       toggleMenuGroup: (menuPath: string) => {
-        console.log('🔄 toggleMenuGroup 호출:', menuPath);
-        console.log('📊 현재 expandedMenus:', get().expandedMenus);
-
-        // null, undefined, 빈 문자열 체크
-        if (!menuPath) {
-          console.log('❌ menuPath가 유효하지 않음:', menuPath);
-          return;
-        }
+        // ❌ menuPath가 유효하지 않음
+        if (!menuPath) return;
 
         const { expandedMenus } = get();
-        const newExpandedMenus = expandedMenus.includes(menuPath)
-          ? expandedMenus.filter((path) => path !== menuPath)
-          : [...expandedMenus, menuPath];
 
-        console.log('✅ 새로운 expandedMenus:', newExpandedMenus);
+        // ✅ 새로운 expandedMenus 생성
+        const newExpandedMenus = expandedMenus.includes(menuPath)
+          ? expandedMenus.filter((path) => path !== menuPath) // 이미 펼쳐져 있으면 접기
+          : [...expandedMenus, menuPath]; // 접혀있으면 펼치기
+
+        // ✅ expandedMenus 업데이트
         set({ expandedMenus: newExpandedMenus });
       },
 
+      /**
+       * 현재 활성화된 메뉴 설정
+       * @param menuPath - 활성화할 메뉴 경로
+       */
       setActiveMenu: (menuPath: string) => {
         set({ activeMenu: menuPath });
       },
 
+      /**
+       * 모든 펼쳐진 메뉴 그룹 초기화
+       * 모든 메뉴 그룹을 접힌 상태로 변경
+       */
       resetExpandedMenus: () => {
         set({ expandedMenus: [] });
       },
     }),
     {
-      name: 'sidebar-storage', // localStorage 키 이름
-      // expandedMenus와 isOpen 모두 저장
+      // ===== localStorage 설정 =====
+
+      /** localStorage에 저장될 키 이름 */
+      name: 'sidebar-storage',
+
+      // localStorage에 expandedMenus와 isOpen만 저장 (activeMenu는 저장하지 않음)
+      // set() 이 호출될때 persist 미들웨어에 의해 자동으로 호출됨.
       partialize: (state) => ({
-        expandedMenus: state.expandedMenus,
-        isOpen: state.isOpen,
+        expandedMenus: state.expandedMenus, // 펼쳐진 메뉴 그룹 상태
+        isOpen: state.isOpen, // 사이드바 열림/닫힘 상태
       }),
-      // 초기 상태를 localStorage에서 가져오기
+
+      // 페이지 새로고침 시 이전 상태를 복원
+      // 복원 완료 후 자동 호출됨.
       onRehydrateStorage: () => (state) => {
         if (state) {
-          // localStorage에서 복원된 상태 사용
-          console.log('🔄 localStorage에서 상태 복원:', state);
+          console.log('🔄 localStorage에서 사이드바 상태 복원:', state);
         }
       },
     },

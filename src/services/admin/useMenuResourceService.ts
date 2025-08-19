@@ -13,9 +13,14 @@ export const useMenuResourceService = () => {
     enabled: api.status === 'authenticated',
     queryFn: async () => {
       const res = await api.get(MENU_RESOURCE_API.LIST);
-      return res.data.filter(
+      console.log('Raw API response:', res.data); // 디버깅용 로그
+
+      const filteredData = res.data.filter(
         (resource: MenuResource) => resource.resourceType === 'MENU_ITEM',
       ) as MenuResource[];
+
+      console.log('Filtered menu resources:', filteredData); // 디버깅용 로그
+      return filteredData;
     },
   });
 

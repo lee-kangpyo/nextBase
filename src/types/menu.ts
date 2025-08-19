@@ -10,6 +10,13 @@ export interface MenuResource {
   parentResourceId: number | null;
   displayOrder: number;
   isGroup: boolean;
+  useYn: string; // 사용 여부 (Y: 사용, N: 미사용)
+}
+
+// 트리 구조의 메뉴 리소스 타입
+export interface MenuResourceWithChildren extends MenuResource {
+  children: MenuResourceWithChildren[];
+  isOrphan?: boolean;
 }
 
 export interface MenuResourceRequest {
@@ -21,6 +28,7 @@ export interface MenuResourceRequest {
   parentResourceId?: number | null;
   displayOrder?: number;
   isGroup?: boolean;
+  useYn?: string; // 사용 여부 (Y: 사용, N: 미사용)
 }
 
 // 역할-리소스 매핑 관련 타입

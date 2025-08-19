@@ -63,27 +63,6 @@ const Drawer = styled(MuiDrawer, {
   }),
 }));
 
-// 정적 메뉴 아이템 (기본 구조)
-const staticMenuItems = [
-  { label: '대시보드', path: '/main', icon: STATIC_ICONS.Dashboard },
-  { label: 'FTP 전송', path: '/interface/ftp', icon: STATIC_ICONS.CloudUpload },
-  { label: '이메일 전송', path: '/interface/email', icon: STATIC_ICONS.Email },
-  {
-    label: '관리자',
-    path: '/admin',
-    icon: STATIC_ICONS.AdminPanelSettings,
-    children: [
-      { label: '회원관리', path: '/admin/members', icon: STATIC_ICONS.Person },
-      { label: '권한관리', path: '/admin/roles', icon: STATIC_ICONS.Security },
-      {
-        label: '메뉴관리',
-        path: '/admin/menu-resources',
-        icon: STATIC_ICONS.ListAlt,
-      },
-    ],
-  },
-];
-
 export default function MiniSidebar() {
   const { isOpen, expandedMenus, toggleSidebar, toggleMenuGroup } =
     useSidebarStore();
@@ -95,26 +74,23 @@ export default function MiniSidebar() {
   const { userMenu } = useUserMenuService();
   const { data: menuItems, isLoading, error } = userMenu;
 
-  // 동적 메뉴를 사이드바 형식으로 변환
-  const dynamicMenuItems = React.useMemo(() => {
-    if (!menuItems || menuItems.length === 0) return [];
-
-    return menuItems.map((item: any, index: number) => ({
+  // 동적 메뉴를 사이드바 형식으로 변환 (재귀적)
+  const convertMenuToSidebarFormat = (items: any[]): any[] => {
+    return items.map((item: any, index: number) => ({
       label: item.menuName,
       path: item.menuUrl,
       icon: getIconComponent(item.iconName),
       children:
         item.children && item.children.length > 0
-          ? item.children.map((child: any, childIndex: number) => ({
-              label: child.menuName,
-              path: child.menuUrl,
-              icon: getIconComponent(child.iconName),
-              children: undefined,
-              key: child.menuUrl || `child-${child.menuName}-${childIndex}`, // 고유 key 추가
-            }))
+          ? convertMenuToSidebarFormat(item.children)
           : undefined,
-      key: item.menuUrl || `menu-${item.menuName}-${index}`, // 고유 key 추가
+      key: item.menuUrl || `menu-${item.menuName}-${index}`,
     }));
+  };
+
+  const dynamicMenuItems = React.useMemo(() => {
+    if (!menuItems || menuItems.length === 0) return [];
+    return convertMenuToSidebarFormat(menuItems);
   }, [menuItems]);
 
   const handleMenuClick = (item: any) => {
@@ -122,7 +98,6 @@ export default function MiniSidebar() {
     if (item.children) {
       // path가 null이면 key를 사용
       const menuPath = item.path || item.key;
-      console.log('✅ toggleMenuGroup 호출:', menuPath);
       toggleMenuGroup(menuPath);
     } else {
       console.log('❌ children이 없음');
@@ -143,7 +118,7 @@ export default function MiniSidebar() {
           px: 2.5,
           pl: isOpen ? 2.5 + level * 2 : 2.5,
         }}
-        component={hasChildren ? 'div' : NextLink} // NextLink 사용
+        component={hasChildren ? 'div' : NextLink} // hasChildren이면 div, 아니면 NextLink
         href={hasChildren ? undefined : menuPath}
         onClick={hasChildren ? () => handleMenuClick(item) : undefined}
       >

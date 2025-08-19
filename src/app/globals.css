@@ -342,3 +342,13 @@
   background-image: --value(--overlay-*);
   box-shadow: --value(--shadow-*);
 }
+
+/* SweetAlert2 z-index 오버라이드 */
+.swal2-popup-high-zindex {
+  z-index: 99999 !important;
+}
+
+/* SweetAlert2 전체 컨테이너 z-index 오버라이드 */
+.swal2-container {
+  z-index: 99999 !important;
+}

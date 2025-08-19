@@ -112,6 +112,9 @@ export const DialogProvider = ({ children }: DialogProviderProps) => {
             icon: iconToUse,
             confirmButtonText: config.confirmText || '확인',
             allowOutsideClick: false, // 외부 클릭으로 닫히지 않도록
+            customClass: {
+              popup: 'swal2-popup-high-zindex',
+            },
             // 기타 SweetAlert2 옵션 추가 가능
           }).then(() => true) as Promise<true>; // SweetAlert2는 Promise<SweetAlertResult>를 반환하므로 true로 매핑
         } else if (config.type === 'confirm') {
@@ -124,6 +127,9 @@ export const DialogProvider = ({ children }: DialogProviderProps) => {
             cancelButtonText: config.cancelText || '취소',
             reverseButtons: true, // 버튼 순서 뒤집기 (확인-취소 -> 취소-확인)
             allowOutsideClick: false,
+            customClass: {
+              popup: 'swal2-popup-high-zindex',
+            },
           }).then((result) => {
             return result.isConfirmed; // '확인' 버튼 클릭 시 true, '취소' 클릭 시 false
           }) as Promise<T extends AlertDialogOptions ? true : boolean>;

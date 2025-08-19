@@ -1,49 +1,36 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Typography,
   Button,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
+  Card,
+  CardContent,
+  CardActions,
   Chip,
+  Stack,
+  Grid,
 } from '@mui/material';
+
 import {
+  List as ListIcon,
+  AccountTree as TreeIcon,
   Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
+  Folder as FolderIcon,
+  Article as ArticleIcon,
+  Settings as SettingsIcon,
+  ViewModule as ViewModuleIcon,
 } from '@mui/icons-material';
-import * as MuiIcons from '@mui/icons-material';
 import { useMenuResourceService } from '@/services/admin';
-import { MenuResource, MenuResourceRequest } from '@/types/menu';
 import DataLoader from '@/components/DataLoader';
-import IconSelector from '@/components/IconSelector/IconSelector';
 
 export default function MenuResourcesPage() {
-  const {
-    menuResources,
-    createMenuResource,
-    updateMenuResource,
-    deleteMenuResource,
-  } = useMenuResourceService();
+  const router = useRouter();
+  const { menuResources } = useMenuResourceService();
 
-  // 함수 호출 후 구조분해
   const {
     data: menuResourcesData,
     isLoading,
@@ -51,79 +38,23 @@ export default function MenuResourcesPage() {
     isEnabled,
   } = menuResources();
 
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingResource, setEditingResource] = useState<MenuResource | null>(
-    null,
-  );
-  const [formData, setFormData] = useState<MenuResourceRequest>({
-    resourcePattern: '',
-    description: '',
-    menuName: '',
-    menuUrl: '',
-    iconName: '',
-    parentResourceId: null,
-    displayOrder: 1,
-    isGroup: false,
-  });
+  // 통계 계산
+  const totalMenus = menuResourcesData?.length || 0;
+  const groupMenus = menuResourcesData?.filter((r) => r.isGroup).length || 0;
+  const itemMenus = totalMenus - groupMenus;
 
-  const handleOpenDialog = (resource?: MenuResource) => {
-    if (resource) {
-      setEditingResource(resource);
-      setFormData({
-        resourcePattern: resource.resourcePattern,
-        description: resource.description,
-        menuName: resource.menuName,
-        menuUrl: resource.menuUrl,
-        iconName: resource.iconName,
-        parentResourceId: resource.parentResourceId,
-        displayOrder: resource.displayOrder,
-        isGroup: resource.isGroup,
-      });
-    } else {
-      setEditingResource(null);
-      setFormData({
-        resourcePattern: '',
-        description: '',
-        menuName: '',
-        menuUrl: '',
-        iconName: '',
-        parentResourceId: null,
-        displayOrder: 1,
-        isGroup: false,
-      });
-    }
-    setOpenDialog(true);
-  };
-
-  const handleCloseDialog = () => {
-    setOpenDialog(false);
-    setEditingResource(null);
-  };
-
-  const handleSubmit = async () => {
-    try {
-      if (editingResource) {
-        await updateMenuResource.mutateAsync({
-          resourceId: editingResource.resourceId,
-          data: formData,
-        });
-      } else {
-        await createMenuResource.mutateAsync(formData);
-      }
-      handleCloseDialog();
-    } catch (error) {
-      alert('메뉴 리소스 저장에 실패했습니다: ' + (error as Error).message);
+  const handleViewChange = (view: 'list' | 'tree' | 'card') => {
+    if (view === 'list') {
+      router.push('/admin/menu-resources/list-view');
+    } else if (view === 'tree') {
+      router.push('/admin/menu-resources/tree-view');
+    } else if (view === 'card') {
+      router.push('/admin/menu-resources/card-view');
     }
   };
 
-  const handleDelete = async (resourceId: number) => {
-    if (confirm('정말 삭제하시겠습니까?')) {
-      try {
-        await deleteMenuResource.mutateAsync(resourceId);
-      } catch (error) {
-        alert('메뉴 리소스 삭제에 실패했습니다: ' + (error as Error).message);
-      }
-    }
+  const handleQuickAdd = () => {
+    router.push('/admin/menu-resources/list-view');
   };
 
   return (
@@ -133,214 +64,205 @@ export default function MenuResourcesPage() {
       isFetching={isFetching}
       isEnabled={isEnabled}
       loadingMessage="메뉴 리소스를 불러오는 중..."
-      showBackgroundSpinner={true}
     >
       <Box sx={{ p: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 3,
-          }}
-        >
-          <Typography variant="h4">메뉴 리소스 관리</Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={() => handleOpenDialog()}
-          >
-            메뉴 추가
-          </Button>
+        {/* 헤더 */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h3" gutterBottom>
+            메뉴 리소스 관리
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            시스템 메뉴와 권한을 관리할 수 있습니다.
+          </Typography>
         </Box>
 
-        <TableContainer component={Paper}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>메뉴명</TableCell>
-                <TableCell>URL</TableCell>
-                <TableCell>아이콘</TableCell>
-                <TableCell>패턴</TableCell>
-                <TableCell>순서</TableCell>
-                <TableCell>그룹</TableCell>
-                <TableCell>부모</TableCell>
-                <TableCell>작업</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {menuResourcesData?.map((resource) => (
-                <TableRow key={resource.resourceId}>
-                  <TableCell>{resource.resourceId}</TableCell>
-                  <TableCell>{resource.menuName}</TableCell>
-                  <TableCell>{resource.menuUrl}</TableCell>
-                  <TableCell>
-                    {(() => {
-                      const IconComponent = resource.iconName
-                        ? (MuiIcons as any)[resource.iconName]
-                        : null;
-                      return IconComponent ? (
-                        <IconComponent />
-                      ) : (
-                        resource.iconName
-                      );
-                    })()}
-                  </TableCell>
-                  <TableCell>{resource.resourcePattern}</TableCell>
-                  <TableCell>{resource.displayOrder}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={resource.isGroup ? '그룹' : '메뉴'}
-                      color={resource.isGroup ? 'primary' : 'default'}
-                      size="small"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    {resource.parentResourceId
-                      ? resource.parentResourceId
-                      : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleOpenDialog(resource)}
-                    >
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleDelete(resource.resourceId)}
-                      color="error"
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        {/* 통계 카드 */}
+        <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Paper sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h4" color="primary">
+                {totalMenus}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                전체 메뉴
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Paper sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h4" color="secondary">
+                {groupMenus}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                그룹 메뉴
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Paper sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h4" color="info">
+                {itemMenus}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                일반 메뉴
+              </Typography>
+            </Paper>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Paper sx={{ p: 2, textAlign: 'center' }}>
+              <Typography variant="h4" color="success">
+                {menuResourcesData?.filter((r) => r.parentResourceId === null)
+                  .length || 0}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                최상위 메뉴
+              </Typography>
+            </Paper>
+          </Grid>
+        </Grid>
 
-        <Dialog
-          open={openDialog}
-          onClose={handleCloseDialog}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle>
-            {editingResource ? '메뉴 수정' : '메뉴 추가'}
-          </DialogTitle>
-          <DialogContent>
-            <Box sx={{ display: 'grid', gap: 2, mt: 1 }}>
-              <TextField
-                label="메뉴명"
-                value={formData.menuName}
-                onChange={(e) =>
-                  setFormData({ ...formData, menuName: e.target.value })
-                }
-                fullWidth
-                required
-              />
-              <TextField
-                label="URL"
-                value={formData.menuUrl}
-                onChange={(e) =>
-                  setFormData({ ...formData, menuUrl: e.target.value })
-                }
-                fullWidth
-                required
-              />
-              <TextField
-                label="리소스 패턴"
-                value={formData.resourcePattern}
-                onChange={(e) =>
-                  setFormData({ ...formData, resourcePattern: e.target.value })
-                }
-                fullWidth
-                required
-              />
-              <IconSelector
-                label="아이콘"
-                value={formData.iconName}
-                onChange={(iconName) => setFormData({ ...formData, iconName })}
-              />
-              <TextField
-                label="설명"
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
-                fullWidth
-                multiline
-                rows={2}
-              />
-              <Box
-                sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}
-              >
-                <TextField
-                  label="표시 순서"
-                  type="number"
-                  value={formData.displayOrder}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      displayOrder: Number(e.target.value),
-                    })
-                  }
-                  fullWidth
-                />
-                <FormControl fullWidth>
-                  <InputLabel>부모 메뉴</InputLabel>
-                  <Select
-                    value={formData.parentResourceId || ''}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        parentResourceId: e.target.value || null,
-                      })
-                    }
-                    label="부모 메뉴"
+        {/* 뷰 선택 */}
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h5" gutterBottom>
+            뷰 선택
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                  <ListIcon
+                    sx={{ fontSize: 60, color: 'primary.main', mb: 2 }}
+                  />
+                  <Typography variant="h6" gutterBottom>
+                    리스트 뷰
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 3 }}
                   >
-                    <MenuItem value="">없음</MenuItem>
-                    {menuResourcesData
-                      ?.filter((r: MenuResource) => r.isGroup)
-                      .map((resource) => (
-                        <MenuItem
-                          key={resource.resourceId}
-                          value={resource.resourceId}
-                        >
-                          {resource.menuName}
-                        </MenuItem>
-                      ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              <FormControl fullWidth>
-                <InputLabel>메뉴 타입</InputLabel>
-                <Select
-                  value={formData.isGroup ? 'group' : 'menu'}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      isGroup: e.target.value === 'group',
-                    })
-                  }
-                  label="메뉴 타입"
+                    테이블 형태로 모든 메뉴 리소스를 한눈에 확인하고 관리할 수
+                    있습니다.
+                  </Typography>
+                  <Stack direction="row" spacing={1} justifyContent="center">
+                    <Chip label="CRUD 작업" size="small" />
+                    <Chip label="일괄 관리" size="small" />
+                    <Chip label="상세 정보" size="small" />
+                  </Stack>
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<ListIcon />}
+                    onClick={() => handleViewChange('list')}
+                    size="large"
+                  >
+                    리스트 뷰 열기
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card sx={{ height: '100%' }}>
+                ㅇ
+                <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                  <TreeIcon
+                    sx={{ fontSize: 60, color: 'secondary.main', mb: 2 }}
+                  />
+                  <Typography variant="h6" gutterBottom>
+                    트리 뷰
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 3 }}
+                  >
+                    계층 구조로 메뉴를 시각화하고 드래그 앤 드롭으로 순서를
+                    조정할 수 있습니다.
+                  </Typography>
+                  <Stack direction="row" spacing={1} justifyContent="center">
+                    <Chip label="계층 구조" size="small" />
+                    <Chip label="드래그 앤 드롭" size="small" />
+                    <Chip label="시각적 관리" size="small" />
+                  </Stack>
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<TreeIcon />}
+                    onClick={() => handleViewChange('tree')}
+                    size="large"
+                    color="secondary"
+                  >
+                    트리 뷰 열기
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card sx={{ height: '100%' }}>
+                <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                  <ViewModuleIcon
+                    sx={{ fontSize: 60, color: 'info.main', mb: 2 }}
+                  />
+                  <Typography variant="h6" gutterBottom>
+                    카드 뷰
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 3 }}
+                  >
+                    카드 형태로 메뉴 구조를 한눈에 확인하고 관리할 수 있습니다.
+                  </Typography>
+                  <Stack direction="row" spacing={1} justifyContent="center">
+                    <Chip label="카드 레이아웃" size="small" />
+                    <Chip label="시각적 구조" size="small" />
+                    <Chip label="직관적 관리" size="small" />
+                  </Stack>
+                </CardContent>
+                <CardActions sx={{ justifyContent: 'center', pb: 3 }}>
+                  <Button
+                    variant="contained"
+                    startIcon={<ViewModuleIcon />}
+                    onClick={() => handleViewChange('card')}
+                    size="large"
+                    color="info"
+                  >
+                    카드 뷰 열기
+                  </Button>
+                </CardActions>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
+
+        {/* 빠른 액션 */}
+        <Box>
+          <Typography variant="h5" gutterBottom>
+            빠른 액션
+          </Typography>
+          <Paper sx={{ p: 3 }}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <Typography variant="body1">
+                  새로운 메뉴를 추가하거나 기존 메뉴를 수정하려면
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }} sx={{ textAlign: 'right' }}>
+                <Button
+                  variant="contained"
+                  startIcon={<AddIcon />}
+                  onClick={handleQuickAdd}
+                  size="large"
                 >
-                  <MenuItem value="menu">일반 메뉴</MenuItem>
-                  <MenuItem value="group">그룹 메뉴</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleCloseDialog}>취소</Button>
-            <Button onClick={handleSubmit} variant="contained">
-              {editingResource ? '수정' : '추가'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+                  메뉴 추가하기
+                </Button>
+              </Grid>
+            </Grid>
+          </Paper>
+        </Box>
       </Box>
     </DataLoader>
   );
