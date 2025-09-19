@@ -19,7 +19,7 @@ import { toast } from 'react-toastify';
 
 // 트리 메뉴 타입 정의
 interface TreeMenuResource extends MenuResource {
-  children: MenuResource[];
+  children: TreeMenuResource[];
   isOrphan?: boolean;
 }
 

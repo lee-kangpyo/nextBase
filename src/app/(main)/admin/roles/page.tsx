@@ -18,6 +18,8 @@ import {
   DialogActions,
   TextField,
   Chip,
+  Divider,
+  Grid,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -27,6 +29,7 @@ import {
 } from '@mui/icons-material';
 import DataLoader from '@/components/DataLoader';
 import { useRoleService, useMenuResourceService } from '@/services/admin';
+import RoleMenuPreview from '@/components/interface/menu-resources/RoleMenuPreview';
 
 // 타입 정의 추가
 interface Role {
@@ -335,29 +338,52 @@ export default function RolesPage() {
         <Dialog
           open={openResourceDialog}
           onClose={() => setOpenResourceDialog(false)}
-          maxWidth="md"
+          maxWidth="lg"
           fullWidth
         >
           <DialogTitle>{selectedRole?.roleName} - 리소스 관리</DialogTitle>
-          <DialogContent>
+          <DialogContent sx={{ height: '600px', overflow: 'hidden' }}>
             {selectedRole && (
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                  할당된 리소스
-                </Typography>
-                <RoleResourceList
-                  roleId={selectedRole.roleId}
-                  onRemove={handleRemoveResource}
-                />
+              <Grid container spacing={3} sx={{ mt: 1, height: '100%' }}>
+                {/* 왼쪽: 리소스 관리 (6/12 컬럼) */}
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  sx={{ height: '100%', overflow: 'auto' }}
+                >
+                  <Typography variant="h6" gutterBottom>
+                    할당된 리소스
+                  </Typography>
+                  <RoleResourceList
+                    roleId={selectedRole.roleId}
+                    onRemove={handleRemoveResource}
+                  />
 
-                <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-                  사용 가능한 리소스
-                </Typography>
-                <AvailableResourceList
-                  roleId={selectedRole.roleId}
-                  onAdd={handleAddResource}
-                />
-              </Box>
+                  <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+                    사용 가능한 리소스
+                  </Typography>
+                  <AvailableResourceList
+                    roleId={selectedRole.roleId}
+                    onAdd={handleAddResource}
+                  />
+                </Grid>
+
+                {/* 오른쪽: 메뉴 미리보기 (6/12 컬럼) */}
+                <Grid
+                  size={{ xs: 12, md: 6 }}
+                  sx={{ height: '100%', overflow: 'auto' }}
+                >
+                  <Typography variant="h6" gutterBottom>
+                    메뉴 미리보기
+                  </Typography>
+                  <RoleMenuPreview
+                    selectedRoles={[selectedRole.roleId]}
+                    onRolesChange={() => {}} // 읽기 전용
+                    showRoleFilter={false}
+                    maxHeight="100%"
+                    context="role-management"
+                  />
+                </Grid>
+              </Grid>
             )}
           </DialogContent>
           <DialogActions>

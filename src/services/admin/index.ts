@@ -31,3 +31,6 @@ export { useUserService } from './useUserService';
 
 // 메뉴 리소스 관리 서비스
 export { useMenuResourceService } from './useMenuResourceService';
+
+// 권한별 메뉴 조회 서비스
+export { useRoleMenuService } from './useRoleMenuService';

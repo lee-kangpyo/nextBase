@@ -13,6 +13,7 @@ import {
   Chip,
   Stack,
   Grid,
+  Divider,
 } from '@mui/material';
 
 import {
@@ -23,9 +24,11 @@ import {
   Article as ArticleIcon,
   Settings as SettingsIcon,
   ViewModule as ViewModuleIcon,
+  Security as SecurityIcon,
 } from '@mui/icons-material';
 import { useMenuResourceService } from '@/services/admin';
 import DataLoader from '@/components/DataLoader';
+import MenuResourceRolePreview from './components/MenuResourceRolePreview';
 
 export default function MenuResourcesPage() {
   const router = useRouter();
@@ -261,6 +264,13 @@ export default function MenuResourcesPage() {
                 </Button>
               </Grid>
             </Grid>
+          </Paper>
+        </Box>
+
+        {/* 권한별 메뉴 영향도 확인 */}
+        <Box sx={{ mt: 4 }}>
+          <Paper sx={{ p: 3, backgroundColor: 'background.default' }}>
+            <MenuResourceRolePreview />
           </Paper>
         </Box>
       </Box>

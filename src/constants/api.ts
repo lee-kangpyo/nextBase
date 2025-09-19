@@ -74,6 +74,7 @@ export const EMAIL_API = {
 // Menu 관련 API
 export const MENU_API = {
   LIST: '/menu',
+  BY_ROLES: '/menu/by-roles', // 권한별 메뉴 조회 API (/api 제거)
   // GET: (menuId: number) => `/menu/${menuId}`,
   // CREATE: '/menu/create',
   // UPDATE: (menuId: number) => `/menu/${menuId}/update`,

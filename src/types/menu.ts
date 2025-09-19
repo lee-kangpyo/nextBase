@@ -44,6 +44,24 @@ export interface RoleWithResources {
   resources: MenuResource[];
 }
 
+// 권한별 메뉴 조회 관련 타입
+export interface RoleMenuRequest {
+  roleIds: number[]; // 조회할 역할 ID 목록
+}
+
+export interface RoleMenuResponse {
+  roleId: number;
+  roleName: string;
+  menuResources: MenuResourceWithChildren[]; // 계층 구조 메뉴
+}
+
+// 권한별 메뉴 조회 결과 (여러 역할의 합집합)
+export interface RoleMenuUnionResponse {
+  menuResources: MenuResourceWithChildren[]; // 합집합 처리된 메뉴
+  roleCount: number; // 조회된 역할 수
+  totalMenuCount: number; // 총 메뉴 수
+}
+
 interface MenuItem {
   id: number;
   name: string; // 메뉴 이름 (한국어)
